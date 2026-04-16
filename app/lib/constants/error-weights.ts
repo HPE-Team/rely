@@ -105,3 +105,17 @@ export function getErrorPhaseFromProvisionPercent(
   }
   return 'post-provision';
 }
+
+export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
+  HARDWARE_FAILURE: 'Hardware Failure',
+  RESOURCE_FAILURE: 'Resource Failure',
+  STORAGE_FAILURE: 'Storage Failure',
+  NETWORK_FAILURE: 'Network Failure',
+  IP_FAILURE: 'IP Address Failure',
+  POWER_FAILURE: 'Power Failure',
+  HOST_FAILURE: 'Host Failure',
+};
+
+export function getErrorTypeLabel(errorType: ErrorType): string {
+  return ERROR_TYPE_LABELS[errorType];
+}

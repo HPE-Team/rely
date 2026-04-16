@@ -1,12 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { DEFAULT_ERROR_WEIGHTS, ErrorType, ERROR_CLASSIFICATIONS } from '@/app/lib/constants/error-weights';
-import { Slider } from '@/app/components/ui/slider';
-import { Button } from '@/app/components/ui/button';
-import { sileo } from 'sileo';
+import { useState, useEffect } from "react";
+import {
+  DEFAULT_ERROR_WEIGHTS,
+  ErrorType,
+  ERROR_CLASSIFICATIONS,
+  getErrorTypeLabel,
+} from "@/app/lib/constants/error-weights";
+import { Slider } from "@/app/components/ui/slider";
+import { Button } from "@/app/components/ui/button";
+import { sileo } from "sileo";
 
-const STORAGE_KEY = 'pri_error_weights';
+const STORAGE_KEY = "pri_error_weights";
 
 interface WeightConfigProps {
   onClose?: () => void;
@@ -14,7 +19,9 @@ interface WeightConfigProps {
 }
 
 export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
-  const [weights, setWeights] = useState<Record<ErrorType, number>>(DEFAULT_ERROR_WEIGHTS);
+  const [weights, setWeights] = useState<Record<ErrorType, number>>(
+    DEFAULT_ERROR_WEIGHTS,
+  );
 
   useEffect(() => {
     // Load saved weights from localStorage
@@ -23,7 +30,7 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
       try {
         setWeights(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to parse saved weights:', e);
+        console.error("Failed to parse saved weights:", e);
       }
     }
   }, []);
@@ -36,19 +43,29 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
   const handleSave = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(weights));
     onWeightsUpdate?.(weights);
-    sileo.success({ title: "Changes saved" });
+    sileo.success({
+      title: "Changes saved",
+      fill: "#171717",
+      description: "Your custom error weights have been saved.",
+    });
   };
 
   const handleReset = () => {
     setWeights(DEFAULT_ERROR_WEIGHTS);
     localStorage.removeItem(STORAGE_KEY);
-    sileo.info({ title: "Weights reset to defaults" });
+    sileo.info({
+      title: "Weights reset to defaults",
+      fill: "#171717",
+      description: "Your error weights have been reset to the default values.",
+    });
   };
 
   return (
     <div>
-      <div className="flex flex-col space-y-1.5 text-left mb-8">
-        <h2 className="text-2xl font-bold leading-none tracking-tight">Configuration</h2>
+      <div className="flex flex-col space-y-1.5 text-left mb-8 py-4">
+        <h2 className="text-2xl font-bold leading-none tracking-tight">
+          Configuration
+        </h2>
         <p className="text-sm text-muted-foreground">
           Adjust the impact factor of specific failures on the PRI index score
         </p>
@@ -59,14 +76,20 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
             <div key={errorType} className="space-y-3">
               <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm truncate">{errorType.replace('_', ' ')}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{config.description}</p>
+                  <p className="font-medium text-sm truncate">
+                    {getErrorTypeLabel(errorType as ErrorType)}
+                  </p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">
+                    {config.description}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="font-mono font-semibold text-sm">
                     {weights[errorType as ErrorType].toFixed(2)}x
                   </p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold text-[10px]">{config.phase.split('-')[0]}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
+                    {config.phase.split("-")[0]}
+                  </p>
                 </div>
               </div>
               <Slider
@@ -84,10 +107,19 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
         </div>
 
         <div className="flex gap-4 pt-8">
-          <Button onClick={handleSave} size="lg" className="flex-1 font-semibold">
+          <Button
+            onClick={handleSave}
+            size="lg"
+            className="flex-1 font-semibold"
+          >
             Save Configuration
           </Button>
-          <Button onClick={handleReset} size="lg" variant="outline" className="flex-1 font-semibold">
+          <Button
+            onClick={handleReset}
+            size="lg"
+            variant="outline"
+            className="flex-1 font-semibold"
+          >
             Reset to Defaults
           </Button>
         </div>
@@ -97,7 +129,9 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
 }
 
 export function useErrorWeights() {
-  const [weights, setWeights] = useState<Record<ErrorType, number>>(DEFAULT_ERROR_WEIGHTS);
+  const [weights, setWeights] = useState<Record<ErrorType, number>>(
+    DEFAULT_ERROR_WEIGHTS,
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -105,7 +139,7 @@ export function useErrorWeights() {
       try {
         setWeights(JSON.parse(saved));
       } catch (e) {
-        console.error('Failed to parse saved weights:', e);
+        console.error("Failed to parse saved weights:", e);
       }
     }
   }, []);

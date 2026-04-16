@@ -5,10 +5,12 @@ import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/app/lib/utils"
 
+export type ChartConfig = Record<string, { label?: string; color?: string }>
+
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
-    config?: Record<string, { label?: string; color?: string }>
+    config?: ChartConfig
   }
 >(({ className, ...props }, ref) => (
   <div
@@ -21,9 +23,11 @@ ChartContainer.displayName = "ChartContainer"
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 const ChartLegend = RechartsPrimitive.Legend
+const ChartTooltipContent = RechartsPrimitive.DefaultTooltipContent
 
 export {
   ChartContainer,
   ChartTooltip,
+  ChartTooltipContent,
   ChartLegend,
 }

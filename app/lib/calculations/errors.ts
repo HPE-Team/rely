@@ -30,6 +30,17 @@ export interface ComputeServerForErrors {
   error_message: string | null;
 }
 
+function resolveErrorPhase(server: ComputeServerForErrors): ErrorPhase {
+  if (server.error_type && server.error_type in ERROR_CLASSIFICATIONS) {
+    return ERROR_CLASSIFICATIONS[server.error_type as ErrorType].phase;
+  }
+
+  return getErrorPhaseFromProvisionPercent(
+    Number(server.provision_percent),
+    server.status
+  );
+}
+
 /**
  * Analyze error distribution across servers
  */
@@ -48,10 +59,7 @@ export function analyzeErrorDistribution(
       byType.set(errorType, (byType.get(errorType) || 0) + 1);
 
       // Count by phase
-      const phase = getErrorPhaseFromProvisionPercent(
-        Number(server.provision_percent),
-        server.status
-      );
+      const phase = resolveErrorPhase(server);
       byPhase.set(phase, (byPhase.get(phase) || 0) + 1);
 
       // Count by node type
@@ -91,10 +99,7 @@ export function separateErrorsByPhase(servers: ComputeServerForErrors[]) {
 
   servers.forEach(server => {
     if (server.error_type) {
-      const phase = getErrorPhaseFromProvisionPercent(
-        Number(server.provision_percent),
-        server.status
-      );
+      const phase = resolveErrorPhase(server);
 
       if (phase === 'pre-provision') {
         preProvisionErrors.push(server);

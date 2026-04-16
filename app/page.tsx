@@ -9,6 +9,7 @@ import {
   getErrorTypeLabel,
   type ErrorType,
 } from "@/app/lib/constants/error-weights";
+import { formatZoneLabel } from "@/app/lib/utils";
 import {
   Card,
   CardContent,
@@ -18,6 +19,7 @@ import {
 } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Skeleton } from "@/app/components/ui/skeleton";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface ZoneData {
   zone_id: string;
@@ -134,9 +136,26 @@ export default function Dashboard() {
     [aggregate],
   );
 
+  const totalHosts = useMemo(
+    () => zones.reduce((sum, zone) => sum + zone.hosts_count, 0),
+    [zones],
+  );
+  const totalVMs = useMemo(
+    () => zones.reduce((sum, zone) => sum + zone.vms_count, 0),
+    [zones],
+  );
+  const totalNodes = totalHosts + totalVMs;
+  const nodeTypeSplit = useMemo(
+    () => [
+      { name: "ESX Hosts", value: totalHosts, color: "#2b7fff" },
+      { name: "VMs", value: totalVMs, color: "#8ec5ff" },
+    ],
+    [totalHosts, totalVMs],
+  );
+
   return (
     <div className=" bg-background">
-      <div className="max-w-7xl mx-auto py-8 pt-4">
+      <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8 pt-4">
         {/* Fleet Summary */}
         {!isLoading && aggregate && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
@@ -215,10 +234,78 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mb-4">
               {zones.length} zone{zones.length !== 1 ? "s" : ""} monitored
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {zones.map((zone) => (
-                <ZoneOverviewCard key={zone.zone_id} {...zone} />
-              ))}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {zones.map((zone) => (
+                  <ZoneOverviewCard key={zone.zone_id} {...zone} />
+                ))}
+              </div>
+
+              <Card className="border-border/50 shadow-sm h-fit">
+                <CardHeader className="pb-4 border-b border-border/30">
+                  <CardTitle className="text-xl">Node Type Split</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    ESX hosts vs virtual machines across monitored zones
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="h-56 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "rgba(15, 23, 42, 0.95)",
+                            border: "1px solid #334155",
+                            borderRadius: "8px",
+                          }}
+                          labelStyle={{ color: "#e2e8f0" }}
+                          itemStyle={{ color: "#e2e8f0" }}
+                        />
+                        <Pie
+                          data={nodeTypeSplit}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={55}
+                          outerRadius={85}
+                          stroke="none"
+                        >
+                          {nodeTypeSplit.map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {nodeTypeSplit.map((entry) => {
+                      const percent =
+                        totalNodes > 0
+                          ? ((entry.value / totalNodes) * 100).toFixed(1)
+                          : "0.0";
+                      return (
+                        <div
+                          key={entry.name}
+                          className="flex items-center justify-between rounded-lg border border-border/40 bg-[#1d1d1d] px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-sm"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {entry.name}
+                            </span>
+                          </div>
+                          <span className="font-semibold">
+                            {entry.value} ({percent}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         )}
@@ -259,10 +346,13 @@ export default function Dashboard() {
 
             <div>
               <Skeleton className="h-4 w-36 mb-4" />
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={`zone-card-${i}`} className="h-64" />
-                ))}
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...Array(8)].map((_, i) => (
+                    <Skeleton key={`zone-card-${i}`} className="h-64" />
+                  ))}
+                </div>
+                <Skeleton className="h-[30rem]" />
               </div>
             </div>
 
@@ -286,15 +376,17 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-lg border border-border/40 border-l-4 border-l-[#2b7fff] p-4">
+                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
                   <p className="text-sm text-muted-foreground">
                     Highest Risk Zone
                   </p>
                   <p className="text-2xl font-semibold mt-1">
-                    {aggregate.overview.highest_risk_zone ?? "N/A"}
+                    {aggregate.overview.highest_risk_zone
+                      ? formatZoneLabel(aggregate.overview.highest_risk_zone)
+                      : "N/A"}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/40 border-l-4 border-l-[#155dfc] p-4">
+                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
                   <p className="text-sm text-muted-foreground">
                     Host-Originated Errors
                   </p>
@@ -302,7 +394,7 @@ export default function Dashboard() {
                     {aggregate.errors.by_node_type.hosts}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/40 border-l-4 border-l-[#1447e6] p-4">
+                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
                   <p className="text-sm text-muted-foreground">
                     VM-Originated Errors
                   </p>

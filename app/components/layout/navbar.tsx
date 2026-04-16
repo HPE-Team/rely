@@ -17,7 +17,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b border-border/40 bg-background/100 bg-background sticky top-0 z-40 w-full py-4 flex items-center justify-between max-w-7xl mx-auto">
+    <nav className="border-b border-border/40 bg-background/100 bg-background sticky top-0 z-40 w-full py-4 px-4 lg:px-0 flex items-center justify-between max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
         <Link
           className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
@@ -38,7 +38,7 @@ export function Navbar() {
               <Settings className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent className="outline-none px-6 py-4 sm:px-12 sm:py-6">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-xl max-h-[85vh] overflow-y-auto outline-none px-4 py-4 sm:px-8 sm:py-6">
             <DialogTitle className="sr-only">
               Configure Metric Weights
             </DialogTitle>

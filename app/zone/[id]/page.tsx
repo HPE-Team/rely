@@ -96,11 +96,11 @@ export default function ZonePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto py-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
           <div className="space-y-8">
             <div>
-              <Skeleton className="h-12 w-64 mb-3" />
-              <Skeleton className="h-5 w-[28rem]" />
+              <Skeleton className="h-12 w-full max-w-64 mb-3" />
+              <Skeleton className="h-5 w-full max-w-[28rem]" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -128,7 +128,7 @@ export default function ZonePage() {
   if (error || !zoneDetail) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto py-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
           <Link href="/">
             <Button variant="outline" className="mb-4 gap-2">
               <ArrowLeft className="w-4 h-4" />
@@ -181,7 +181,7 @@ export default function ZonePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto py-8">
+      <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
         {/* Header */}
         {/* <Link href="/">
           <Button variant="outline" className="mb-4 gap-2">
@@ -346,6 +346,7 @@ export default function ZonePage() {
               </div>
             </CardContent>
           </Card>
+
         </div>
 
         {/* Error Analysis */}
@@ -422,7 +423,7 @@ export default function ZonePage() {
           <CardContent className="pt-6 space-y-8">
             {/* Top Stat Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl">
+              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl border border-border/40">
                 <p className="text-sm font-medium text-muted-foreground mb-1">
                   Total Errors
                 </p>
@@ -432,7 +433,7 @@ export default function ZonePage() {
                 </p>
               </div>
 
-              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl">
+              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl border border-border/40">
                 <p className="text-sm font-medium text-muted-foreground mb-1">
                   Pre-Provision Errors
                 </p>
@@ -446,7 +447,7 @@ export default function ZonePage() {
                 </div>
               </div>
 
-              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl">
+              <div className="flex flex-col justify-center p-6 bg-secondary/30 rounded-xl border border-border/40">
                 <p className="text-sm font-medium text-muted-foreground mb-1">
                   Post-Provision Errors
                 </p>
@@ -468,7 +469,7 @@ export default function ZonePage() {
                   By Node Type
                 </p>
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-background border border-border/40 border-l-4 border-l-[#2b7fff]">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40">
                     <span className="text-sm text-muted-foreground font-medium">
                       ESX Hosts
                     </span>
@@ -476,7 +477,7 @@ export default function ZonePage() {
                       {zoneDetail.errors.by_node_type.hosts}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-background border border-border/40 border-l-4 border-l-[#155dfc]">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40">
                     <span className="text-sm text-muted-foreground font-medium">
                       Virtual Machines
                     </span>
@@ -497,7 +498,7 @@ export default function ZonePage() {
                     .map((e) => (
                       <div
                         key={e.type}
-                        className="flex items-center justify-between p-4 rounded-lg bg-background border border-border/40 border-l-4 border-l-[#1447e6]"
+                        className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40"
                       >
                         <span className="text-sm text-muted-foreground font-medium">
                           {getErrorTypeLabel(e.type as any)}

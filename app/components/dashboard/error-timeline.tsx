@@ -103,30 +103,32 @@ export function ErrorTimeline({
   }
 
   return (
-    <Card className="border-border/50 shadow-sm h-fit">
-      <CardHeader className="pb-4 border-b border-border/30">
-        <div className="flex items-center justify-between">
+      <Card className="border-border/50 shadow-sm h-fit">
+        <CardHeader className="pb-4 border-b border-border/30">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-xl">Error Classification</CardTitle>
           </div>
-          <div className="flex gap-2">
+            <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex">
             <Button
               variant={phase === "pre-provision" ? "default" : "outline"}
               size="sm"
+                className="h-auto min-w-24 py-2"
               onClick={() => handlePhaseChange("pre-provision")}
             >
-              Pre-Provision ({totalPreProvision})
+                <span>Pre ({totalPreProvision})</span>
             </Button>
             <Button
               variant={phase === "post-provision" ? "default" : "outline"}
               size="sm"
+                className="h-auto min-w-24 py-2"
               onClick={() => handlePhaseChange("post-provision")}
             >
-              Post-Provision ({totalPostProvision})
+                <span>Post ({totalPostProvision})</span>
             </Button>
+            </div>
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent className="pt-6">
         {data.length === 0 ? (
           <div className="h-80 flex items-center justify-center">

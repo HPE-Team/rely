@@ -1,13 +1,17 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-import * as schema from './schema';
+import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
+import * as schema from "./schema";
 
 // Cache the pool on globalThis so it survives Next.js HMR reloads.
 // Without this, every hot reload creates a new pool without closing the old one,
 // quickly exhausting the MySQL connection limit.
 const globalForDb = globalThis as unknown as {
   __dbPool: mysql.Pool | undefined;
-  __db: ReturnType<typeof drizzle> | undefined;
+  __db:
+    | (MySql2Database<typeof schema> & {
+        $client: mysql.Pool;
+      })
+    | undefined;
 };
 
 function getDb() {
@@ -26,10 +30,13 @@ function getDb() {
     });
 
     globalForDb.__dbPool = pool;
-    globalForDb.__db = drizzle(pool, { schema, mode: 'default' });
+    globalForDb.__db = drizzle<typeof schema, mysql.Pool>(pool, {
+      schema,
+      mode: "default",
+    });
     return globalForDb.__db;
   } catch (err) {
-    console.error('Failed to initialize database:', err);
+    console.error("Failed to initialize database:", err);
     return null;
   }
 }

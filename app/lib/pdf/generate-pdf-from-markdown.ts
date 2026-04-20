@@ -1,7 +1,8 @@
 // Keep this file Node-only. It's used by API routes.
 
-import { spawn } from "node:child_process";
-import path from "node:path";
+import { mdToPdf } from "md-to-pdf";
+import type { PDFOptions } from "puppeteer";
+import chromium from "@sparticuz/chromium";
 
 type MdToPdfOptions = {
   document_title?: string;
@@ -19,10 +20,6 @@ export type PdfResult =
 
 /**
  * Generate a PDF Buffer from a Markdown string using md-to-pdf.
- *
- * We run md-to-pdf via its CLI in a separate Node process to avoid Next's
- * server/bundler path rewriting (e.g. "[project]/node_modules/..."), which can
- * break md-to-pdf's internal module resolution.
  */
 export async function generatePdfFromMarkdown(
   markdown: string,
@@ -33,15 +30,7 @@ export async function generatePdfFromMarkdown(
       return { success: false, error: "Markdown content is required" };
     }
 
-    const cli = path.join(
-      process.cwd(),
-      "node_modules",
-      "md-to-pdf",
-      "dist",
-      "cli.js",
-    );
-
-    const pdfOptions = {
+    const pdfOptions: PDFOptions = {
       format: "A4",
       printBackground: true,
       margin: {
@@ -56,54 +45,44 @@ export async function generatePdfFromMarkdown(
     // Override just the base size (headings/code remain relative).
     const css = "body { font-size: 11pt; }";
 
-    const args = [
-      cli,
-      "--document-title",
-      options?.document_title ?? "",
-      "--highlight-style",
-      "github",
-      "--css",
+    const cfg = {
+      document_title: options?.document_title ?? "",
       css,
-      "--pdf-options",
-      JSON.stringify(pdfOptions),
-    ];
+      pdf_options: pdfOptions,
+    };
 
-    const child = spawn(process.execPath, args, {
-      stdio: ["pipe", "pipe", "pipe"],
-      env: process.env,
-    });
+    // On Vercel/serverless, Puppeteer can't download Chrome. Use Sparticuz Chromium.
+    const isServerless =
+      process.env.VERCEL === "1" ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME !== undefined;
 
-    child.stdin.write(markdown);
-    child.stdin.end();
+    const launch_options = isServerless
+      ? {
+          args: chromium.args,
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        }
+      : undefined;
 
-    const chunks: Buffer[] = [];
-    const errChunks: Buffer[] = [];
-    child.stdout.on("data", (d: Buffer) => chunks.push(d));
-    child.stderr.on("data", (d: Buffer) => errChunks.push(d));
+    const pdf = await mdToPdf(
+      { content: markdown },
+      {
+        basedir: process.cwd(),
+        dest: "",
+        page_media_type: "print",
+        document_title: cfg.document_title,
+        highlight_style: "github",
+        css: cfg.css,
+        pdf_options: cfg.pdf_options,
+        ...(launch_options ? { launch_options } : null),
+      },
+    );
 
-    const code: number = await new Promise((resolve, reject) => {
-      child.on("error", reject);
-      child.on("close", (c) => resolve(c ?? 1));
-    });
-
-    const stderr = Buffer.concat(errChunks).toString("utf8").trim();
-
-    if (code !== 0) {
-      return {
-        success: false,
-        error: stderr || `md-to-pdf failed with exit code ${code}`,
-      };
+    if (!pdf || !pdf.content) {
+      return { success: false, error: "Failed to generate PDF" };
     }
 
-    const out = Buffer.concat(chunks);
-    if (out.length === 0) {
-      return {
-        success: false,
-        error: stderr || "Failed to generate PDF content",
-      };
-    }
-
-    return { success: true, buffer: out };
+    return { success: true, buffer: Buffer.from(pdf.content) };
   } catch (e: unknown) {
     return {
       success: false,

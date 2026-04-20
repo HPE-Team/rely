@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generatePdfFromMarkdown } from "@/app/lib/pdf/generate-pdf-from-markdown";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function sanitizeFilename(name: string) {

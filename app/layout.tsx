@@ -44,7 +44,10 @@ export default function RootLayout({
         <Navbar />
         <main className="flex-1">{children}</main>
         <footer className="mt-10">
-          <div className="max-w-7xl mx-auto px-4 lg:px-0 border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8">
+            <hr className="border-t border-border/40" />
+          </div>
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-6 text-center text-sm text-muted-foreground">
             Made as part of the PRI HPE CPP Project
           </div>
         </footer>

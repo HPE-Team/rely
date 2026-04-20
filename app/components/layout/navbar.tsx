@@ -17,7 +17,8 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b border-border/40 bg-background/100 bg-background sticky top-0 z-40 w-full py-4 px-4 lg:px-8 flex items-center justify-between max-w-7xl mx-auto">
+    <div className="bg-background/100 bg-background sticky top-0 z-40 w-full">
+      <nav className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
         <Link
           className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
@@ -65,6 +66,10 @@ export function Navbar() {
           </DialogContent>
         </Dialog>
       </div>
-    </nav>
+      </nav>
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+        <hr className="border-t border-border/40" />
+      </div>
+    </div>
   );
 }

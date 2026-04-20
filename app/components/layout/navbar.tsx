@@ -17,7 +17,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b border-border/40 bg-background/100 bg-background sticky top-0 z-40 w-full py-4 px-4 lg:px-0 flex items-center justify-between max-w-7xl mx-auto">
+    <nav className="border-b border-border/40 bg-background/100 bg-background sticky top-0 z-40 w-full py-4 px-4 lg:px-8 flex items-center justify-between max-w-7xl mx-auto">
       <div className="flex items-center gap-3">
         <Link
           className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"

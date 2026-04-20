@@ -82,8 +82,12 @@ export default function Dashboard() {
   useEffect(() => {
     setIsLoading(true);
     Promise.all([
-      fetch(withConfig("/api/zones", priConfig), { cache: "no-store" }).then(r => r.json()),
-      fetch(withConfig("/api/zones/aggregate", priConfig), { cache: "no-store" }).then(r => r.json()),
+      fetch(withConfig("/api/zones", priConfig), { cache: "no-store" }).then(
+        (r) => r.json(),
+      ),
+      fetch(withConfig("/api/zones/aggregate", priConfig), {
+        cache: "no-store",
+      }).then((r) => r.json()),
     ])
       .then(([zonesResponse, aggregateResponse]) => {
         const fetchErrors: string[] = [];
@@ -95,7 +99,9 @@ export default function Dashboard() {
         }
 
         if (!aggregateResponse.success) {
-          fetchErrors.push(aggregateResponse.error || "Failed to fetch aggregate metrics");
+          fetchErrors.push(
+            aggregateResponse.error || "Failed to fetch aggregate metrics",
+          );
         } else {
           setAggregate(aggregateResponse.data);
         }
@@ -103,7 +109,7 @@ export default function Dashboard() {
         setError(fetchErrors.length > 0 ? fetchErrors.join(" | ") : null);
         setIsLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         setError(err.message);
         setIsLoading(false);
       });
@@ -112,21 +118,37 @@ export default function Dashboard() {
   const preProvisionErrorData = useMemo(
     () =>
       (aggregate?.errors.by_type ?? [])
-        .filter(e => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
-        .map(e => ({ type: e.type, name: getErrorLabel(e.type), count: e.count, percentage: e.percentage })),
+        .filter((e) => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+        .map((e) => ({
+          type: e.type,
+          name: getErrorLabel(e.type),
+          count: e.count,
+          percentage: e.percentage,
+        })),
     [aggregate],
   );
 
   const postProvisionErrorData = useMemo(
     () =>
       (aggregate?.errors.by_type ?? [])
-        .filter(e => !["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
-        .map(e => ({ type: e.type, name: getErrorLabel(e.type), count: e.count, percentage: e.percentage })),
+        .filter((e) => !["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+        .map((e) => ({
+          type: e.type,
+          name: getErrorLabel(e.type),
+          count: e.count,
+          percentage: e.percentage,
+        })),
     [aggregate],
   );
 
-  const totalHosts = useMemo(() => zones.reduce((sum, z) => sum + z.hosts_count, 0), [zones]);
-  const totalVMs = useMemo(() => zones.reduce((sum, z) => sum + z.vms_count, 0), [zones]);
+  const totalHosts = useMemo(
+    () => zones.reduce((sum, z) => sum + z.hosts_count, 0),
+    [zones],
+  );
+  const totalVMs = useMemo(
+    () => zones.reduce((sum, z) => sum + z.vms_count, 0),
+    [zones],
+  );
   const totalNodes = totalHosts + totalVMs;
   const nodeTypeSplit = useMemo(
     () => [
@@ -138,7 +160,7 @@ export default function Dashboard() {
 
   return (
     <div className="bg-background">
-      <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8 pt-4">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 pt-4">
         {/* Fleet Summary */}
         {!isLoading && aggregate && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
@@ -165,9 +187,12 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{aggregate.overview.total_servers}</p>
+                <p className="text-3xl font-bold">
+                  {aggregate.overview.total_servers}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {aggregate.overview.total_hosts} hosts / {aggregate.overview.total_vms} VMs
+                  {aggregate.overview.total_hosts} hosts /{" "}
+                  {aggregate.overview.total_vms} VMs
                 </p>
               </CardContent>
             </Card>
@@ -183,7 +208,8 @@ export default function Dashboard() {
                   {aggregate.errors.total}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Pre: {aggregate.errors.pre_provision_total} • Post: {aggregate.errors.post_provision_total}
+                  Pre: {aggregate.errors.pre_provision_total} • Post:{" "}
+                  {aggregate.errors.post_provision_total}
                 </p>
               </CardContent>
             </Card>
@@ -195,9 +221,12 @@ export default function Dashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{aggregate.overview.total_zones}</p>
+                <p className="text-3xl font-bold">
+                  {aggregate.overview.total_zones}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Most reliable: {aggregate.overview.most_reliable_zone ?? "N/A"}
+                  Most reliable:{" "}
+                  {aggregate.overview.most_reliable_zone ?? "N/A"}
                 </p>
               </CardContent>
             </Card>
@@ -212,7 +241,7 @@ export default function Dashboard() {
             </p>
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
               <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {zones.map(zone => (
+                {zones.map((zone) => (
                   <ZoneOverviewCard key={zone.zone_id} {...zone} />
                 ))}
               </div>
@@ -245,7 +274,7 @@ export default function Dashboard() {
                           outerRadius={85}
                           stroke="none"
                         >
-                          {nodeTypeSplit.map(entry => (
+                          {nodeTypeSplit.map((entry) => (
                             <Cell key={entry.name} fill={entry.color} />
                           ))}
                         </Pie>
@@ -254,20 +283,28 @@ export default function Dashboard() {
                   </div>
 
                   <div className="mt-4 space-y-2">
-                    {nodeTypeSplit.map(entry => {
-                      const percent = totalNodes > 0
-                        ? ((entry.value / totalNodes) * 100).toFixed(1)
-                        : "0.0";
+                    {nodeTypeSplit.map((entry) => {
+                      const percent =
+                        totalNodes > 0
+                          ? ((entry.value / totalNodes) * 100).toFixed(1)
+                          : "0.0";
                       return (
                         <div
                           key={entry.name}
                           className="flex items-center justify-between rounded-lg border border-border/40 bg-[#1d1d1d] px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: entry.color }} />
-                            <span className="text-sm text-muted-foreground">{entry.name}</span>
+                            <span
+                              className="h-2.5 w-2.5 rounded-sm"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              {entry.name}
+                            </span>
                           </div>
-                          <span className="font-semibold">{entry.value} ({percent}%)</span>
+                          <span className="font-semibold">
+                            {entry.value} ({percent}%)
+                          </span>
                         </div>
                       );
                     })}
@@ -282,14 +319,21 @@ export default function Dashboard() {
         {error && (
           <Card className="mb-8 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
             <CardHeader>
-              <CardTitle className="text-red-900 dark:text-red-100">Error Loading Zones</CardTitle>
+              <CardTitle className="text-red-900 dark:text-red-100">
+                Error Loading Zones
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-red-800 dark:text-red-200">{error}</p>
               <p className="text-sm text-red-700 dark:text-red-300 mt-2">
-                Make sure your database connection is configured correctly in .env.local
+                Make sure your database connection is configured correctly in
+                .env.local
               </p>
-              <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">
+              <Button
+                onClick={() => window.location.reload()}
+                className="mt-4"
+                variant="outline"
+              >
                 Retry
               </Button>
             </CardContent>
@@ -335,7 +379,9 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
-                  <p className="text-sm text-muted-foreground">Highest Risk Zone</p>
+                  <p className="text-sm text-muted-foreground">
+                    Highest Risk Zone
+                  </p>
                   <p className="text-2xl font-semibold mt-1">
                     {aggregate.overview.highest_risk_zone
                       ? formatZoneLabel(aggregate.overview.highest_risk_zone)
@@ -343,12 +389,20 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
-                  <p className="text-sm text-muted-foreground">Host-Originated Errors</p>
-                  <p className="text-2xl font-semibold mt-1">{aggregate.errors.by_node_type.hosts}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Host-Originated Errors
+                  </p>
+                  <p className="text-2xl font-semibold mt-1">
+                    {aggregate.errors.by_node_type.hosts}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
-                  <p className="text-sm text-muted-foreground">VM-Originated Errors</p>
-                  <p className="text-2xl font-semibold mt-1">{aggregate.errors.by_node_type.vms}</p>
+                  <p className="text-sm text-muted-foreground">
+                    VM-Originated Errors
+                  </p>
+                  <p className="text-2xl font-semibold mt-1">
+                    {aggregate.errors.by_node_type.vms}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -356,7 +410,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
               <ErrorDistributionChart
                 title="Fleet Error Distribution"
-                data={aggregate.errors.by_type.map(e => ({
+                data={aggregate.errors.by_type.map((e) => ({
                   name: getErrorLabel(e.type),
                   value: e.count,
                   type: e.type,

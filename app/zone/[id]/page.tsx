@@ -19,11 +19,7 @@ import { ErrorDistributionChart } from "@/app/components/dashboard/error-distrib
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { ArrowLeft, Info } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/app/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import { usePRIConfig } from "@/app/components/dashboard/weight-config";
 import { withConfig } from "@/app/lib/config/pri-config";
 import type { PRIBreakdown, ZoneColor } from "@/app/lib/calculations/pri";
@@ -127,7 +123,7 @@ export default function ZonePage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
           <div className="space-y-8">
             <div>
               <Skeleton className="h-12 w-full max-w-64 mb-3" />
@@ -159,7 +155,7 @@ export default function ZonePage() {
   if (error || !zoneDetail) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
           <Link href="/">
             <Button variant="outline" className="mb-4 gap-2">
               <ArrowLeft className="w-4 h-4" />
@@ -209,9 +205,14 @@ export default function ZonePage() {
     red: "text-red-400",
   };
 
-  const zoneColorText = COLOR_TEXT[zoneDetail.overall.color] ?? "text-foreground";
-  const hostColorText = zoneDetail.hosts.color ? COLOR_TEXT[zoneDetail.hosts.color] : zoneColorText;
-  const vmColorText = zoneDetail.vms.color ? COLOR_TEXT[zoneDetail.vms.color] : zoneColorText;
+  const zoneColorText =
+    COLOR_TEXT[zoneDetail.overall.color] ?? "text-foreground";
+  const hostColorText = zoneDetail.hosts.color
+    ? COLOR_TEXT[zoneDetail.hosts.color]
+    : zoneColorText;
+  const vmColorText = zoneDetail.vms.color
+    ? COLOR_TEXT[zoneDetail.vms.color]
+    : zoneColorText;
 
   const zoneLabel = formatZoneLabel(zoneDetail.zone_id);
   const priBreakdownCards = {
@@ -234,11 +235,13 @@ export default function ZonePage() {
       color: zoneDetail.vms.color,
     },
   };
-  const activeBreakdown = priBreakdownTarget ? priBreakdownCards[priBreakdownTarget] : null;
+  const activeBreakdown = priBreakdownTarget
+    ? priBreakdownCards[priBreakdownTarget]
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 lg:px-0 py-8">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         {/* Header */}
         {/* <Link href="/">
           <Button variant="outline" className="mb-4 gap-2">
@@ -249,7 +252,9 @@ export default function ZonePage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className={`font-sans text-4xl font-bold mb-2 ${zoneColorText}`}>
+            <h1
+              className={`font-sans text-4xl font-bold mb-2 ${zoneColorText}`}
+            >
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -322,57 +327,85 @@ export default function ZonePage() {
 
           <Dialog open={provisionInfoOpen} onOpenChange={setProvisionInfoOpen}>
             <DialogContent className="max-w-sm">
-              <DialogTitle className="pr-8 pt-2 mb-2">Provision Time Details</DialogTitle>
+              <DialogTitle className="pr-8 pt-2 mb-2">
+                Provision Time Details
+              </DialogTitle>
               <div className="space-y-4 pb-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/40 border border-border/40 p-3">
-                    <p className="text-xs text-muted-foreground mb-1">Average</p>
-                    <p className="text-xl font-bold">{zoneDetail.overall.avg_provision_time.toFixed(1)}s</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Average
+                    </p>
+                    <p className="text-xl font-bold">
+                      {zoneDetail.overall.avg_provision_time.toFixed(1)}s
+                    </p>
                   </div>
                   <div className="rounded-lg bg-muted/40 border border-border/40 p-3">
                     <p className="text-xs text-muted-foreground mb-1">Median</p>
-                    <p className="text-xl font-bold">{zoneDetail.overall.median_provision_time?.toFixed(1) ?? "—"}s</p>
+                    <p className="text-xl font-bold">
+                      {zoneDetail.overall.median_provision_time?.toFixed(1) ??
+                        "—"}
+                      s
+                    </p>
                   </div>
                 </div>
 
                 {zoneDetail.overall.outlier_ratio > 0 && (
                   <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3 space-y-2">
-                    <p className="text-xs font-medium text-yellow-400">Outliers</p>
-                    <p className="text-sm text-foreground">
-                      {zoneDetail.overall.outlier_ratio.toFixed(1)}% of provisions exceeded{" "}
-                      <span className="font-mono font-semibold">{zoneDetail.overall.outlier_upper_fence?.toFixed(0)}s</span> (IQR upper fence)
+                    <p className="text-xs font-medium text-yellow-400">
+                      Outliers
                     </p>
-                    {zoneDetail.overall.outlier_servers && zoneDetail.overall.outlier_servers.length > 0 && (
-                      <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                        {zoneDetail.overall.outlier_servers.map((s) => (
-                          <div
-                            key={s.id}
-                            className="flex items-center justify-between rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                                {s.node_type}
+                    <p className="text-sm text-foreground">
+                      {zoneDetail.overall.outlier_ratio.toFixed(1)}% of
+                      provisions exceeded{" "}
+                      <span className="font-mono font-semibold">
+                        {zoneDetail.overall.outlier_upper_fence?.toFixed(0)}s
+                      </span>{" "}
+                      (IQR upper fence)
+                    </p>
+                    {zoneDetail.overall.outlier_servers &&
+                      zoneDetail.overall.outlier_servers.length > 0 && (
+                        <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                          {zoneDetail.overall.outlier_servers.map((s) => (
+                            <div
+                              key={s.id}
+                              className="flex items-center justify-between rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                                  {s.node_type}
+                                </span>
+                                <span className="font-mono text-xs truncate">
+                                  #{s.id}
+                                </span>
+                                {s.status === "failed" && (
+                                  <span className="text-[10px] text-red-400 font-semibold">
+                                    FAILED
+                                  </span>
+                                )}
+                              </div>
+                              <span className="font-mono text-xs font-semibold text-yellow-300 flex-shrink-0">
+                                {s.provision_time.toFixed(1)}s
                               </span>
-                              <span className="font-mono text-xs truncate">#{s.id}</span>
-                              {s.status === "failed" && (
-                                <span className="text-[10px] text-red-400 font-semibold">FAILED</span>
-                              )}
                             </div>
-                            <span className="font-mono text-xs font-semibold text-yellow-300 flex-shrink-0">
-                              {s.provision_time.toFixed(1)}s
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      )}
                   </div>
                 )}
 
                 {(zoneDetail.overall.cascaded_failures ?? 0) > 0 && (
                   <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3">
-                    <p className="text-xs font-medium text-orange-400 mb-1">Cascade Deduplication</p>
+                    <p className="text-xs font-medium text-orange-400 mb-1">
+                      Cascade Deduplication
+                    </p>
                     <p className="text-sm text-foreground">
-                      <span className="font-semibold">{zoneDetail.overall.cascaded_failures}</span> VM failures excluded from PRI — caused by host failure, not independent issues. Blast radius reflected in zone color instead.
+                      <span className="font-semibold">
+                        {zoneDetail.overall.cascaded_failures}
+                      </span>{" "}
+                      VM failures excluded from PRI — caused by host failure,
+                      not independent issues. Blast radius reflected in zone
+                      color instead.
                     </p>
                   </div>
                 )}
@@ -476,7 +509,6 @@ export default function ZonePage() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Error Analysis */}

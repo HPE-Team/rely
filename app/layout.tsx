@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Montserrat, Geist_Mono, Geist } from "next/font/google";
+import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 import { Toaster } from "sileo";
@@ -39,7 +36,7 @@ export default function RootLayout({
         "antialiased",
         geistMono.variable,
         "font-sans",
-        geist.variable,
+        spaceGrotesk.variable,
       )}
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">

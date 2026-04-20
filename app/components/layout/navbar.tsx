@@ -24,7 +24,7 @@ export function Navbar() {
           href="/"
         >
           <Image src="/logo.svg" alt="Logo" width={32} height={32} />
-          <h1 className="text-xl font-bold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight">
             Rel<span className="text-[#8ec5ff]">y</span>
           </h1>
         </Link>

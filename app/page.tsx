@@ -312,15 +312,15 @@ export default function Dashboard() {
 
         {/* Error State */}
         {error && (
-          <Card className="mb-8 border-red-200 bg-red-50">
+          <Card className="mb-8 border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
             <CardHeader>
-              <CardTitle className="text-red-900">
+              <CardTitle className="text-red-900 dark:text-red-100">
                 Error Loading Zones
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-800">{error}</p>
-              <p className="text-sm text-red-700 mt-2">
+              <p className="text-red-800 dark:text-red-200">{error}</p>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-2">
                 Make sure your database connection is configured correctly in
                 .env.local
               </p>

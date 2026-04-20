@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHighlighter } from "shiki";
 import { MarkdownContent } from "./markdown-content";
 import { TableOfContents, type TocItem } from "./toc";
+import { ExportPdfButton } from "./export-pdf-button";
 
 const SHIKI_LANGS = [
   "ts",
@@ -107,8 +108,15 @@ export default async function HowWeCalculatePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-10">
-          <article className="rounded-xl border border-border/40 bg-[#111]/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
+          <article className="relative group rounded-xl border border-border/40 bg-[#111]/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
             <MarkdownContent source={source} highlighted={highlighted} />
+
+            {/* Overlay control: keep it out of the markdown flow so "first:" heading styles still apply */}
+            <div className="print:hidden pointer-events-none absolute top-4 right-4 z-10">
+              <div className="pointer-events-auto">
+                <ExportPdfButton markdown={source} filename="how-we-calculate-pri" />
+              </div>
+            </div>
           </article>
 
           <aside className="hidden lg:block">

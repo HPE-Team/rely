@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/app/components/ui/badge";
 import { formatZoneLabel } from "@/app/lib/utils";
 import Link from "next/link";
+import type { ZoneColor } from "@/app/lib/calculations/pri";
 
 interface ZoneOverviewProps {
   zone_id: string;
@@ -18,7 +19,22 @@ interface ZoneOverviewProps {
   hosts_count: number;
   vms_count: number;
   failed_count: number;
+  color?: ZoneColor;
 }
+
+const COLOR_PILL: Record<ZoneColor, string> = {
+  green: "bg-green-500/20 text-green-300",
+  amber: "bg-yellow-500/20 text-yellow-300",
+  red: "bg-red-500/20 text-red-300",
+};
+
+// Fallback for when color is not yet available
+const SCORE_PILL = (score: number) => {
+  if (score >= 90) return "bg-green-500/20 text-green-300";
+  if (score >= 75) return "bg-yellow-500/20 text-yellow-300";
+  if (score >= 50) return "bg-orange-500/20 text-orange-300";
+  return "bg-red-500/20 text-red-300";
+};
 
 export function ZoneOverviewCard({
   zone_id,
@@ -28,28 +44,17 @@ export function ZoneOverviewCard({
   hosts_count,
   vms_count,
   failed_count,
+  color,
 }: ZoneOverviewProps) {
-  const getPRIColor = (score: number) => {
-    if (score >= 90)
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-    if (score >= 75)
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-    if (score >= 50)
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200";
-    return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-  };
+  const pillClass = color ? COLOR_PILL[color] : SCORE_PILL(pri_score);
 
   return (
     <Link href={`/zone/${zone_id}`}>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-neutral-600">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{formatZoneLabel(zone_id)}</CardTitle>
-            </div>
-            <div
-              className={`px-2 py-[0.5] rounded-lg font-bold text-lg ${getPRIColor(pri_score)}`}
-            >
+            <CardTitle>{formatZoneLabel(zone_id)}</CardTitle>
+            <div className={`px-2 py-[0.5] rounded-lg font-bold text-lg ${pillClass}`}>
               {pri_score.toFixed(1)}
             </div>
           </div>

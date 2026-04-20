@@ -18,31 +18,57 @@ import { formatZoneLabel } from "@/app/lib/utils";
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/app/components/ui/dialog";
+import { usePRIConfig } from "@/app/components/dashboard/weight-config";
+import { withConfig } from "@/app/lib/config/pri-config";
+import type { PRIBreakdown, ZoneColor } from "@/app/lib/calculations/pri";
+import { PRIBreakdownModal } from "@/app/components/dashboard/pri-breakdown-modal";
 
 interface ZoneDetail {
   zone_id: string;
   overall: {
+    pri_breakdown: PRIBreakdown;
     pri_score: number;
     success_rate: number;
     failure_rate: number;
     avg_provision_time: number;
+    median_provision_time: number;
     stability_score: number;
     total_servers: number;
     successful_servers: number;
     failed_servers: number;
+    cascaded_failures: number;
+    outlier_ratio: number;
+    outlier_upper_fence: number;
+    outlier_servers?: Array<{
+      id: number;
+      node_type: "HOST" | "VM";
+      provision_time: number;
+      status: string;
+      error_type: string | null;
+    }>;
+    color: ZoneColor;
   };
   hosts: {
+    pri_breakdown: PRIBreakdown;
     pri_score: number;
     success_rate: number;
     total: number;
     failed: number;
+    color?: ZoneColor;
   };
   vms: {
+    pri_breakdown: PRIBreakdown;
     pri_score: number;
     success_rate: number;
     total: number;
     failed: number;
+    color?: ZoneColor;
   };
   errors: {
     error_type_breakdown: Array<{
@@ -67,16 +93,21 @@ interface ZoneDetail {
 export default function ZonePage() {
   const params = useParams();
   const zoneId = params?.id as string;
+  const priConfig = usePRIConfig();
 
   const [zoneDetail, setZoneDetail] = useState<ZoneDetail | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [provisionInfoOpen, setProvisionInfoOpen] = useState(false);
+  const [priBreakdownTarget, setPriBreakdownTarget] = useState<
+    null | "overall" | "hosts" | "vms"
+  >(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!zoneId) return;
 
-    fetch(`/api/zones/${zoneId}`)
+    fetch(withConfig(`/api/zones/${zoneId}`, priConfig))
       .then((res) => res.json())
       .then((detailData) => {
         if (!detailData.success) {
@@ -91,7 +122,7 @@ export default function ZonePage() {
         setError(err.message);
         setIsLoading(false);
       });
-  }, [zoneId]);
+  }, [zoneId, priConfig]);
 
   if (isLoading) {
     return (
@@ -172,12 +203,38 @@ export default function ZonePage() {
       value: e.count,
     }));
 
-  const getPRIColor = (score: number) => {
-    if (score >= 90) return "text-green-600 dark:text-green-400";
-    if (score >= 75) return "text-yellow-600 dark:text-yellow-400";
-    if (score >= 50) return "text-orange-600 dark:text-orange-400";
-    return "text-red-600 dark:text-red-400";
+  const COLOR_TEXT: Record<ZoneColor, string> = {
+    green: "text-green-400",
+    amber: "text-yellow-400",
+    red: "text-red-400",
   };
+
+  const zoneColorText = COLOR_TEXT[zoneDetail.overall.color] ?? "text-foreground";
+  const hostColorText = zoneDetail.hosts.color ? COLOR_TEXT[zoneDetail.hosts.color] : zoneColorText;
+  const vmColorText = zoneDetail.vms.color ? COLOR_TEXT[zoneDetail.vms.color] : zoneColorText;
+
+  const zoneLabel = formatZoneLabel(zoneDetail.zone_id);
+  const priBreakdownCards = {
+    overall: {
+      title: `${zoneLabel} — PRI Breakdown`,
+      score: zoneDetail.overall.pri_score,
+      breakdown: zoneDetail.overall.pri_breakdown,
+      color: zoneDetail.overall.color,
+    },
+    hosts: {
+      title: `${zoneLabel} ESX — PRI Breakdown`,
+      score: zoneDetail.hosts.pri_score,
+      breakdown: zoneDetail.hosts.pri_breakdown,
+      color: zoneDetail.hosts.color,
+    },
+    vms: {
+      title: `${zoneLabel} VMs — PRI Breakdown`,
+      score: zoneDetail.vms.pri_score,
+      breakdown: zoneDetail.vms.pri_breakdown,
+      color: zoneDetail.vms.color,
+    },
+  };
+  const activeBreakdown = priBreakdownTarget ? priBreakdownCards[priBreakdownTarget] : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -192,7 +249,7 @@ export default function ZonePage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-sans text-4xl font-bold text-foreground mb-2">
+            <h1 className={`font-sans text-4xl font-bold mb-2 ${zoneColorText}`}>
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -203,16 +260,17 @@ export default function ZonePage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card
+            className="cursor-pointer transition-colors hover:border-neutral-600"
+            onClick={() => setPriBreakdownTarget("overall")}
+          >
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 PRI Score
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div
-                className={`text-3xl font-bold ${getPRIColor(zoneDetail.overall.pri_score)}`}
-              >
+              <div className={`text-3xl font-bold ${zoneColorText}`}>
                 {zoneDetail.overall.pri_score.toFixed(1)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -240,9 +298,17 @@ export default function ZonePage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Avg Provision Time
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Provision Time
+                </CardTitle>
+                <button
+                  onClick={() => setProvisionInfoOpen(true)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
@@ -253,6 +319,66 @@ export default function ZonePage() {
               </p>
             </CardContent>
           </Card>
+
+          <Dialog open={provisionInfoOpen} onOpenChange={setProvisionInfoOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogTitle className="pr-8 pt-2 mb-2">Provision Time Details</DialogTitle>
+              <div className="space-y-4 pb-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-muted/40 border border-border/40 p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Average</p>
+                    <p className="text-xl font-bold">{zoneDetail.overall.avg_provision_time.toFixed(1)}s</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/40 border border-border/40 p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Median</p>
+                    <p className="text-xl font-bold">{zoneDetail.overall.median_provision_time?.toFixed(1) ?? "—"}s</p>
+                  </div>
+                </div>
+
+                {zoneDetail.overall.outlier_ratio > 0 && (
+                  <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3 space-y-2">
+                    <p className="text-xs font-medium text-yellow-400">Outliers</p>
+                    <p className="text-sm text-foreground">
+                      {zoneDetail.overall.outlier_ratio.toFixed(1)}% of provisions exceeded{" "}
+                      <span className="font-mono font-semibold">{zoneDetail.overall.outlier_upper_fence?.toFixed(0)}s</span> (IQR upper fence)
+                    </p>
+                    {zoneDetail.overall.outlier_servers && zoneDetail.overall.outlier_servers.length > 0 && (
+                      <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                        {zoneDetail.overall.outlier_servers.map((s) => (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                                {s.node_type}
+                              </span>
+                              <span className="font-mono text-xs truncate">#{s.id}</span>
+                              {s.status === "failed" && (
+                                <span className="text-[10px] text-red-400 font-semibold">FAILED</span>
+                              )}
+                            </div>
+                            <span className="font-mono text-xs font-semibold text-yellow-300 flex-shrink-0">
+                              {s.provision_time.toFixed(1)}s
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {(zoneDetail.overall.cascaded_failures ?? 0) > 0 && (
+                  <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3">
+                    <p className="text-xs font-medium text-orange-400 mb-1">Cascade Deduplication</p>
+                    <p className="text-sm text-foreground">
+                      <span className="font-semibold">{zoneDetail.overall.cascaded_failures}</span> VM failures excluded from PRI — caused by host failure, not independent issues. Blast radius reflected in zone color instead.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Card>
             <CardHeader className="pb-2">
@@ -282,14 +408,16 @@ export default function ZonePage() {
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => setPriBreakdownTarget("hosts")}
+                  className="text-left rounded-md -m-1 p-1 hover:bg-muted/40 transition-colors cursor-pointer"
+                >
                   <p className="text-sm text-muted-foreground">PRI Score</p>
-                  <p
-                    className={`text-2xl font-bold ${getPRIColor(zoneDetail.hosts.pri_score)}`}
-                  >
+                  <p className={`text-2xl font-bold ${hostColorText}`}>
                     {zoneDetail.hosts.pri_score.toFixed(1)}
                   </p>
-                </div>
+                </button>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Hosts</p>
                   <p className="text-2xl font-bold">{zoneDetail.hosts.total}</p>
@@ -319,14 +447,16 @@ export default function ZonePage() {
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <button
+                  type="button"
+                  onClick={() => setPriBreakdownTarget("vms")}
+                  className="text-left rounded-md -m-1 p-1 hover:bg-muted/40 transition-colors cursor-pointer"
+                >
                   <p className="text-sm text-muted-foreground">PRI Score</p>
-                  <p
-                    className={`text-2xl font-bold ${getPRIColor(zoneDetail.vms.pri_score)}`}
-                  >
+                  <p className={`text-2xl font-bold ${vmColorText}`}>
                     {zoneDetail.vms.pri_score.toFixed(1)}
                   </p>
-                </div>
+                </button>
                 <div>
                   <p className="text-sm text-muted-foreground">Total VMs</p>
                   <p className="text-2xl font-bold">{zoneDetail.vms.total}</p>
@@ -514,6 +644,17 @@ export default function ZonePage() {
           </CardContent>
         </Card>
       </div>
+
+      {activeBreakdown && (
+        <PRIBreakdownModal
+          open={priBreakdownTarget !== null}
+          onOpenChange={(o) => !o && setPriBreakdownTarget(null)}
+          title={activeBreakdown.title}
+          score={activeBreakdown.score}
+          breakdown={activeBreakdown.breakdown}
+          color={activeBreakdown.color}
+        />
+      )}
     </div>
   );
 }

@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db/connection';
 import { zones, compute_server2 } from '@/app/lib/db/schema';
 import { aggregatePRIMetrics } from '@/app/lib/calculations/pri';
+import { parsePRIConfig } from '@/app/lib/config/pri-config';
 import { eq } from 'drizzle-orm';
 
-// Mock data for development
 const MOCK_ZONES = [
   {
     zone_id: 'zone-a',
@@ -14,6 +14,7 @@ const MOCK_ZONES = [
     hosts_count: 10,
     vms_count: 40,
     failed_count: 3,
+    color: 'green',
   },
   {
     zone_id: 'zone-b',
@@ -23,6 +24,7 @@ const MOCK_ZONES = [
     hosts_count: 9,
     vms_count: 36,
     failed_count: 5,
+    color: 'amber',
   },
   {
     zone_id: 'zone-c',
@@ -32,6 +34,7 @@ const MOCK_ZONES = [
     hosts_count: 11,
     vms_count: 44,
     failed_count: 5,
+    color: 'amber',
   },
   {
     zone_id: 'zone-d',
@@ -41,18 +44,19 @@ const MOCK_ZONES = [
     hosts_count: 8,
     vms_count: 40,
     failed_count: 1,
+    color: 'green',
   },
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Try to fetch from database
+    const config = parsePRIConfig(new URL(request.url).searchParams.get('config'));
+
     if (db) {
       try {
         const allZones = await db.select().from(zones);
 
         if (allZones.length > 0) {
-          // Fetch real data
           const zonesWithPRI = await Promise.all(
             allZones.map(async (zone: any) => {
               const servers = await db!
@@ -69,7 +73,8 @@ export async function GET() {
                   provision_percent: Number(s.provision_percent),
                   provision_time: s.provision_time,
                   error_type: s.error_type,
-                }))
+                })),
+                config,
               );
 
               const hosts = servers.filter((s: any) => s.node_type === 'HOST').length;
@@ -83,6 +88,7 @@ export async function GET() {
                 hosts_count: hosts,
                 vms_count: vms,
                 failed_count: metrics.failedServers,
+                color: metrics.color,
               };
             })
           );
@@ -98,7 +104,6 @@ export async function GET() {
       }
     }
 
-    // Return mock data for development
     return NextResponse.json({
       success: true,
       data: MOCK_ZONES,
@@ -117,4 +122,3 @@ export async function GET() {
     );
   }
 }
-

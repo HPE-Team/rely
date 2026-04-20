@@ -42,7 +42,10 @@ export function Navbar() {
             <DialogTitle className="sr-only">
               Configure Metric Weights
             </DialogTitle>
-            <WeightConfig onClose={() => setOpen(false)} />
+            <WeightConfig
+                onClose={() => setOpen(false)}
+                onWeightsUpdate={() => window.dispatchEvent(new Event('pri-config-changed'))}
+              />
           </DialogContent>
         </Dialog>
       </div>

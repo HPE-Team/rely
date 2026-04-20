@@ -3,13 +3,17 @@ import { db } from "@/app/lib/db/connection";
 import { compute_server2, zones } from "@/app/lib/db/schema";
 import {
   aggregatePRIMetrics,
+  calculateColor,
+  DEFAULT_PRI_CONFIG,
   type ComputeServerData,
+  type ZoneColor,
 } from "@/app/lib/calculations/pri";
 import {
   analyzeErrorDistribution,
   separateErrorsByPhase,
   type ComputeServerForErrors,
 } from "@/app/lib/calculations/errors";
+import { parsePRIConfig } from "@/app/lib/config/pri-config";
 import type { ErrorType } from "@/app/lib/constants/error-weights";
 
 type ZoneComparison = {
@@ -19,45 +23,14 @@ type ZoneComparison = {
   total_servers: number;
   failed_count: number;
   error_rate: number;
+  color: ZoneColor;
 };
 
 const MOCK_ZONES = [
-  {
-    zone_id: "zone-a",
-    pri_score: 92.5,
-    success_rate: 94.2,
-    total_servers: 50,
-    hosts_count: 10,
-    vms_count: 40,
-    failed_count: 3,
-  },
-  {
-    zone_id: "zone-b",
-    pri_score: 87.3,
-    success_rate: 89.5,
-    total_servers: 45,
-    hosts_count: 9,
-    vms_count: 36,
-    failed_count: 5,
-  },
-  {
-    zone_id: "zone-c",
-    pri_score: 88.9,
-    success_rate: 91.2,
-    total_servers: 55,
-    hosts_count: 11,
-    vms_count: 44,
-    failed_count: 5,
-  },
-  {
-    zone_id: "zone-d",
-    pri_score: 95.1,
-    success_rate: 96.8,
-    total_servers: 48,
-    hosts_count: 8,
-    vms_count: 40,
-    failed_count: 1,
-  },
+  { zone_id: "zone-a", pri_score: 92.5, success_rate: 94.2, total_servers: 50, hosts_count: 10, vms_count: 40, failed_count: 3, color: "green" as ZoneColor },
+  { zone_id: "zone-b", pri_score: 87.3, success_rate: 89.5, total_servers: 45, hosts_count: 9,  vms_count: 36, failed_count: 5, color: "amber" as ZoneColor },
+  { zone_id: "zone-c", pri_score: 88.9, success_rate: 91.2, total_servers: 55, hosts_count: 11, vms_count: 44, failed_count: 5, color: "amber" as ZoneColor },
+  { zone_id: "zone-d", pri_score: 95.1, success_rate: 96.8, total_servers: 48, hosts_count: 8,  vms_count: 40, failed_count: 1, color: "green" as ZoneColor },
 ] as const;
 
 const MOCK_ERROR_BREAKDOWN: Array<{ type: ErrorType; count: number }> = [
@@ -69,9 +42,7 @@ const MOCK_ERROR_BREAKDOWN: Array<{ type: ErrorType; count: number }> = [
   { type: "POWER_FAILURE", count: 1 },
 ];
 
-function toPRIInput(
-  server: typeof compute_server2.$inferSelect,
-): ComputeServerData {
+function toPRIInput(server: typeof compute_server2.$inferSelect): ComputeServerData {
   return {
     id: server.id,
     parent_server_id: server.parent_server_id,
@@ -83,9 +54,7 @@ function toPRIInput(
   };
 }
 
-function toErrorInput(
-  server: typeof compute_server2.$inferSelect,
-): ComputeServerForErrors {
+function toErrorInput(server: typeof compute_server2.$inferSelect): ComputeServerForErrors {
   return {
     id: server.id,
     parent_server_id: server.parent_server_id,
@@ -99,18 +68,15 @@ function toErrorInput(
 
 function buildMockAggregateData() {
   const totalZones = MOCK_ZONES.length;
-  const totalServers = MOCK_ZONES.reduce((sum, zone) => sum + zone.total_servers, 0);
-  const totalErrors = MOCK_ZONES.reduce((sum, zone) => sum + zone.failed_count, 0);
-  const totalHosts = MOCK_ZONES.reduce((sum, zone) => sum + zone.hosts_count, 0);
-  const totalVMs = MOCK_ZONES.reduce((sum, zone) => sum + zone.vms_count, 0);
-  const avgPriScore =
-    MOCK_ZONES.reduce((sum, zone) => sum + zone.pri_score, 0) / totalZones;
-  const avgSuccessRate =
-    MOCK_ZONES.reduce((sum, zone) => sum + zone.success_rate, 0) / totalZones;
+  const totalServers = MOCK_ZONES.reduce((sum, z) => sum + z.total_servers, 0);
+  const totalErrors = MOCK_ZONES.reduce((sum, z) => sum + z.failed_count, 0);
+  const totalHosts = MOCK_ZONES.reduce((sum, z) => sum + z.hosts_count, 0);
+  const totalVMs = MOCK_ZONES.reduce((sum, z) => sum + z.vms_count, 0);
+  const avgPriScore = MOCK_ZONES.reduce((sum, z) => sum + z.pri_score, 0) / totalZones;
+  const avgSuccessRate = MOCK_ZONES.reduce((sum, z) => sum + z.success_rate, 0) / totalZones;
   const preProvisionTotal = MOCK_ERROR_BREAKDOWN
-    .filter((entry) => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(entry.type))
-    .reduce((sum, entry) => sum + entry.count, 0);
-  const postProvisionTotal = totalErrors - preProvisionTotal;
+    .filter(e => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+    .reduce((sum, e) => sum + e.count, 0);
   const sortedZones = [...MOCK_ZONES].sort((a, b) => a.pri_score - b.pri_score);
 
   return {
@@ -124,35 +90,39 @@ function buildMockAggregateData() {
       avg_success_rate: Number(avgSuccessRate.toFixed(2)),
       most_reliable_zone: sortedZones.at(-1)?.zone_id ?? null,
       highest_risk_zone: sortedZones[0]?.zone_id ?? null,
+      fleet_color: "green" as ZoneColor,
     },
     errors: {
       total: totalErrors,
       pre_provision_total: preProvisionTotal,
-      post_provision_total: postProvisionTotal,
-      by_type: MOCK_ERROR_BREAKDOWN.map((entry) => ({
-        type: entry.type,
-        count: entry.count,
-        percentage: totalErrors > 0 ? (entry.count / totalErrors) * 100 : 0,
+      post_provision_total: totalErrors - preProvisionTotal,
+      by_type: MOCK_ERROR_BREAKDOWN.map(e => ({
+        type: e.type,
+        count: e.count,
+        percentage: totalErrors > 0 ? (e.count / totalErrors) * 100 : 0,
       })),
-      by_node_type: {
-        hosts: 3,
-        vms: totalErrors - 3,
-      },
+      by_node_type: { hosts: 3, vms: totalErrors - 3 },
     },
-    zones_comparison: MOCK_ZONES.map((zone) => ({
-      zone_id: zone.zone_id,
-      pri_score: zone.pri_score,
-      success_rate: zone.success_rate,
-      total_servers: zone.total_servers,
-      failed_count: zone.failed_count,
-      error_rate:
-        zone.total_servers > 0 ? (zone.failed_count / zone.total_servers) * 100 : 0,
+    zones_comparison: MOCK_ZONES.map(z => ({
+      zone_id: z.zone_id,
+      pri_score: z.pri_score,
+      success_rate: z.success_rate,
+      total_servers: z.total_servers,
+      failed_count: z.failed_count,
+      error_rate: z.total_servers > 0 ? (z.failed_count / z.total_servers) * 100 : 0,
+      color: z.color,
     })),
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const config = parsePRIConfig(new URL(request.url).searchParams.get('config'));
+    const colorThresholds = {
+      ...DEFAULT_PRI_CONFIG.colorThresholds,
+      ...config?.colorThresholds,
+    };
+
     if (!db) {
       return NextResponse.json({
         success: true,
@@ -177,8 +147,8 @@ export async function GET() {
     }
 
     const zoneIds = new Set([
-      ...zoneRows.map((zone) => zone.zone_id),
-      ...serverRows.map((server) => server.zone_id),
+      ...zoneRows.map(z => z.zone_id),
+      ...serverRows.map(s => s.zone_id),
     ]);
 
     const serversByZone = new Map<string, typeof compute_server2.$inferSelect[]>();
@@ -188,43 +158,44 @@ export async function GET() {
       serversByZone.set(server.zone_id, list);
     }
 
-    const zoneComparison: ZoneComparison[] = Array.from(zoneIds).map((zoneId) => {
+    const zoneComparison: ZoneComparison[] = Array.from(zoneIds).map(zoneId => {
       const zoneServers = serversByZone.get(zoneId) ?? [];
-      const zoneMetrics = aggregatePRIMetrics(zoneServers.map(toPRIInput));
-      const failedCount = zoneMetrics.failedServers;
-
+      const m = aggregatePRIMetrics(zoneServers.map(toPRIInput), config);
       return {
         zone_id: zoneId,
-        pri_score: Number(zoneMetrics.priScore.toFixed(2)),
-        success_rate: Number(zoneMetrics.successRate.toFixed(2)),
-        total_servers: zoneMetrics.totalServers,
-        failed_count: failedCount,
-        error_rate:
-          zoneMetrics.totalServers > 0
-            ? Number(((failedCount / zoneMetrics.totalServers) * 100).toFixed(2))
-            : 0,
+        pri_score: Number(m.priScore.toFixed(2)),
+        success_rate: Number(m.successRate.toFixed(2)),
+        total_servers: m.totalServers,
+        failed_count: m.failedServers,
+        error_rate: m.totalServers > 0
+          ? Number(((m.failedServers / m.totalServers) * 100).toFixed(2))
+          : 0,
+        color: m.color,
       };
     });
 
     const sortedByPri = [...zoneComparison].sort((a, b) => a.pri_score - b.pri_score);
-    const allPRIMetrics = aggregatePRIMetrics(serverRows.map(toPRIInput));
+    const allPRIMetrics = aggregatePRIMetrics(serverRows.map(toPRIInput), config);
     const allErrorData = serverRows.map(toErrorInput);
     const errorDistribution = analyzeErrorDistribution(allErrorData);
-    const { preProvisionErrors, postProvisionErrors } =
-      separateErrorsByPhase(allErrorData);
+    const { preProvisionErrors, postProvisionErrors } = separateErrorsByPhase(allErrorData);
     const totalErrors = errorDistribution.total;
-    const totalHosts = serverRows.filter((server) => server.node_type === "HOST").length;
-    const totalVMs = serverRows.filter((server) => server.node_type === "VM").length;
-    const avgPRI =
-      zoneComparison.length > 0
-        ? zoneComparison.reduce((sum, zone) => sum + zone.pri_score, 0) /
-          zoneComparison.length
-        : allPRIMetrics.priScore;
-    const avgSuccessRate =
-      zoneComparison.length > 0
-        ? zoneComparison.reduce((sum, zone) => sum + zone.success_rate, 0) /
-          zoneComparison.length
-        : allPRIMetrics.successRate;
+    const totalHosts = serverRows.filter(s => s.node_type === "HOST").length;
+    const totalVMs = serverRows.filter(s => s.node_type === "VM").length;
+
+    const avgPRI = zoneComparison.length > 0
+      ? zoneComparison.reduce((sum, z) => sum + z.pri_score, 0) / zoneComparison.length
+      : allPRIMetrics.priScore;
+    const avgSuccessRate = zoneComparison.length > 0
+      ? zoneComparison.reduce((sum, z) => sum + z.success_rate, 0) / zoneComparison.length
+      : allPRIMetrics.successRate;
+
+    const fleetColor = calculateColor(
+      allPRIMetrics.priScore,
+      allPRIMetrics.criticalRatio,
+      allPRIMetrics.esxFailShare,
+      colorThresholds,
+    );
 
     return NextResponse.json({
       success: true,
@@ -239,6 +210,7 @@ export async function GET() {
           avg_success_rate: Number(avgSuccessRate.toFixed(2)),
           most_reliable_zone: sortedByPri.at(-1)?.zone_id ?? null,
           highest_risk_zone: sortedByPri[0]?.zone_id ?? null,
+          fleet_color: fleetColor,
         },
         errors: {
           total: totalErrors,
@@ -256,9 +228,7 @@ export async function GET() {
             vms: errorDistribution.byNodeType.get("VM") ?? 0,
           },
         },
-        zones_comparison: [...zoneComparison].sort(
-          (a, b) => b.pri_score - a.pri_score,
-        ),
+        zones_comparison: [...zoneComparison].sort((a, b) => b.pri_score - a.pri_score),
       },
       timestamp: new Date().toISOString(),
     });

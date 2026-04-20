@@ -119,3 +119,9 @@ export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
 export function getErrorTypeLabel(errorType: ErrorType): string {
   return ERROR_TYPE_LABELS[errorType];
 }
+
+export const CRITICAL_ERRORS: ErrorType[] = (
+  Object.entries(ERROR_CLASSIFICATIONS) as Array<[ErrorType, ErrorClassification]>
+)
+  .filter(([, c]) => c.severity === 'critical')
+  .map(([type]) => type);

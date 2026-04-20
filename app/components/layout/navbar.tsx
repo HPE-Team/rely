@@ -52,7 +52,7 @@ export function Navbar() {
               <Settings className="w-5 h-5" />
             </button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2rem)] max-w-xl max-h-[85vh] overflow-y-auto outline-none px-4 py-4 sm:px-8 sm:py-6">
+          <DialogContent className="w-[calc(100vw-2rem)] max-w-xl lg:max-w-3xl max-h-[85vh] overflow-y-auto outline-none px-4 py-4 sm:px-8 sm:py-6">
             <DialogTitle className="sr-only">
               Configure Metric Weights
             </DialogTitle>

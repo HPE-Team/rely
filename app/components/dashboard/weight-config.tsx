@@ -126,25 +126,36 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
               </button>
               <div className={collapse(phase)}>
                 <div className="overflow-hidden">
-                  <div className="space-y-4 border-t border-border/40 bg-muted/30 px-4 py-4">
+                  <div className="space-y-5 lg:space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
                     {items.map(([errorType, cfg]) => (
-                      <div key={errorType} className="space-y-3">
-                        <div className="flex items-center justify-between gap-4">
+                      <div
+                        key={errorType}
+                        className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center"
+                      >
+                        <div className="flex items-start justify-between gap-4 lg:justify-start">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm truncate">{getErrorTypeLabel(errorType)}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{cfg.description}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{cfg.description}</p>
+                            <p className="hidden lg:inline-block text-[10px] uppercase tracking-wider font-bold text-muted-foreground mt-1.5 px-1.5 py-0.5 rounded bg-muted/60 border border-border/40">
+                              {cfg.severity}
+                            </p>
                           </div>
-                          <div className="text-right flex-shrink-0">
+                          <div className="text-right flex-shrink-0 lg:hidden">
                             <p className="font-mono font-semibold text-sm">{config.errorWeights[errorType].toFixed(2)}x</p>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold text-[10px]">{cfg.severity}</p>
                           </div>
                         </div>
-                        <Slider
-                          value={[config.errorWeights[errorType]]}
-                          onValueChange={v => setErrorWeight(errorType, v[0])}
-                          min={0} max={2} step={0.1}
-                          className="w-full"
-                        />
+                        <div className="flex items-center gap-3">
+                          <Slider
+                            value={[config.errorWeights[errorType]]}
+                            onValueChange={v => setErrorWeight(errorType, v[0])}
+                            min={0} max={2} step={0.1}
+                            className="flex-1"
+                          />
+                          <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
+                            {config.errorWeights[errorType].toFixed(2)}x
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -166,20 +177,23 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
           <div className={collapse("outliers")}>
             <div className="overflow-hidden">
               <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-start justify-between gap-4 lg:justify-start">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm">IQR Outlier Multiplier</p>
                       <p className="text-xs text-muted-foreground">Fence = Q3 + k × IQR. Lower = stricter outlier detection</p>
                     </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0">{config.iqrMultiplier.toFixed(1)}x</p>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.iqrMultiplier.toFixed(1)}x</p>
                   </div>
-                  <Slider
-                    value={[config.iqrMultiplier]}
-                    onValueChange={v => setConfig(c => ({ ...c, iqrMultiplier: v[0] }))}
-                    min={0.5} max={4} step={0.1}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.iqrMultiplier]}
+                      onValueChange={v => setConfig(c => ({ ...c, iqrMultiplier: v[0] }))}
+                      min={0.5} max={4} step={0.1}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.iqrMultiplier.toFixed(1)}x</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -202,8 +216,8 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">PRI Score</p>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-start justify-between gap-4 lg:justify-start">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
@@ -211,20 +225,23 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                       </p>
                       <p className="text-xs text-muted-foreground">PRI ≥ this → green (if severity also low)</p>
                     </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0">{config.colorThresholds.pri.green}</p>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.colorThresholds.pri.green}</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.pri.green]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, green: v[0] } },
-                    }))}
-                    min={50} max={100} step={1}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.pri.green]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, green: v[0] } },
+                      }))}
+                      min={50} max={100} step={1}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.colorThresholds.pri.green}</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-start justify-between gap-4 lg:justify-start">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
@@ -232,17 +249,20 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                       </p>
                       <p className="text-xs text-muted-foreground">PRI &lt; this → red regardless of severity</p>
                     </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0">{config.colorThresholds.pri.amber}</p>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.colorThresholds.pri.amber}</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.pri.amber]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, amber: v[0] } },
-                    }))}
-                    min={0} max={90} step={1}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.pri.amber]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, amber: v[0] } },
+                      }))}
+                      min={0} max={90} step={1}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.colorThresholds.pri.amber}</p>
+                  </div>
                 </div>
 
                 {/* Critical ratio */}
@@ -250,41 +270,47 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                   <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">Critical Error Ratio</p>
                   <p className="text-xs text-muted-foreground">Share of errors that are critical severity (hardware/power/host)</p>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-sm flex items-center gap-2">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-center justify-between gap-4 lg:justify-start">
+                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
                       <span className="h-2 w-2 rounded-full bg-yellow-500 inline-block" />
                       Amber at
                     </p>
-                    <p className="font-mono font-semibold text-sm">{(config.colorThresholds.criticalRatio.amber * 100).toFixed(0)}%</p>
+                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.criticalRatio.amber * 100).toFixed(0)}%</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.criticalRatio.amber]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, amber: v[0] } },
-                    }))}
-                    min={0} max={1} step={0.05}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.criticalRatio.amber]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, amber: v[0] } },
+                      }))}
+                      min={0} max={1} step={0.05}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.criticalRatio.amber * 100).toFixed(0)}%</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-sm flex items-center gap-2">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-center justify-between gap-4 lg:justify-start">
+                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
                       <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
                       Red at
                     </p>
-                    <p className="font-mono font-semibold text-sm">{(config.colorThresholds.criticalRatio.red * 100).toFixed(0)}%</p>
+                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.criticalRatio.red * 100).toFixed(0)}%</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.criticalRatio.red]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, red: v[0] } },
-                    }))}
-                    min={0} max={1} step={0.05}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.criticalRatio.red]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, red: v[0] } },
+                      }))}
+                      min={0} max={1} step={0.05}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.criticalRatio.red * 100).toFixed(0)}%</p>
+                  </div>
                 </div>
 
                 {/* ESX fail share */}
@@ -292,41 +318,47 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                   <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">ESX Failure Share</p>
                   <p className="text-xs text-muted-foreground">Share of root-cause failures on ESX hosts (excludes cascaded VMs)</p>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-sm flex items-center gap-2">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-center justify-between gap-4 lg:justify-start">
+                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
                       <span className="h-2 w-2 rounded-full bg-yellow-500 inline-block" />
                       Amber at
                     </p>
-                    <p className="font-mono font-semibold text-sm">{(config.colorThresholds.esxFailShare.amber * 100).toFixed(0)}%</p>
+                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.esxFailShare.amber * 100).toFixed(0)}%</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.esxFailShare.amber]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, amber: v[0] } },
-                    }))}
-                    min={0} max={1} step={0.05}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.esxFailShare.amber]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, amber: v[0] } },
+                      }))}
+                      min={0} max={1} step={0.05}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.esxFailShare.amber * 100).toFixed(0)}%</p>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium text-sm flex items-center gap-2">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-center justify-between gap-4 lg:justify-start">
+                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
                       <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
                       Red at
                     </p>
-                    <p className="font-mono font-semibold text-sm">{(config.colorThresholds.esxFailShare.red * 100).toFixed(0)}%</p>
+                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.esxFailShare.red * 100).toFixed(0)}%</p>
                   </div>
-                  <Slider
-                    value={[config.colorThresholds.esxFailShare.red]}
-                    onValueChange={v => setConfig(c => ({
-                      ...c,
-                      colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, red: v[0] } },
-                    }))}
-                    min={0} max={1} step={0.05}
-                    className="w-full"
-                  />
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.colorThresholds.esxFailShare.red]}
+                      onValueChange={v => setConfig(c => ({
+                        ...c,
+                        colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, red: v[0] } },
+                      }))}
+                      min={0} max={1} step={0.05}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.esxFailShare.red * 100).toFixed(0)}%</p>
+                  </div>
                 </div>
               </div>
             </div>

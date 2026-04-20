@@ -99,42 +99,22 @@ function buildComponents(highlighted: Record<string, string>): Components {
       {children}
     </h1>
   ),
-  h2: ({ children }) => {
-    const id = slugify(children);
-    return (
-      <h2
-        id={id}
-        className="group relative scroll-mt-24 text-3xl font-bold tracking-tight text-foreground mt-16 mb-5 pt-10 border-t border-border/40 first:mt-0 first:pt-0 first:border-t-0"
-      >
-        <a
-          href={`#${id}`}
-          aria-label="Link to section"
-          className="absolute -left-6 top-[2.625rem] opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-[#8ec5ff] transition-opacity no-underline"
-        >
-          #
-        </a>
-        {children}
-      </h2>
-    );
-  },
-  h3: ({ children }) => {
-    const id = slugify(children);
-    return (
-      <h3
-        id={id}
-        className="group relative scroll-mt-24 text-xl font-semibold tracking-tight text-foreground mt-10 mb-3 pl-3 border-l-2 border-[#8ec5ff]/70"
-      >
-        <a
-          href={`#${id}`}
-          aria-label="Link to section"
-          className="absolute -left-5 top-0.5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-[#8ec5ff] transition-opacity no-underline text-base"
-        >
-          #
-        </a>
-        {children}
-      </h3>
-    );
-  },
+  h2: ({ children }) => (
+    <h2
+      id={slugify(children)}
+      className="scroll-mt-24 text-3xl font-bold tracking-tight text-foreground mt-16 mb-5 pt-10 border-t border-border/40 first:mt-0 first:pt-0 first:border-t-0"
+    >
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3
+      id={slugify(children)}
+      className="scroll-mt-24 text-xl font-semibold tracking-tight text-foreground mt-10 mb-3 pl-3 border-l-2 border-[#8ec5ff]/70"
+    >
+      {children}
+    </h3>
+  ),
   p: ({ children }) => (
     <p className="text-[15px] leading-7 text-muted-foreground mb-4">
       {children}

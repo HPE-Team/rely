@@ -252,9 +252,7 @@ export default function ZonePage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1
-              className={`font-sans text-4xl font-bold mb-2 ${zoneColorText}`}
-            >
+            <h1 className={`font-sans text-4xl font-bold mb-2`}>
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">

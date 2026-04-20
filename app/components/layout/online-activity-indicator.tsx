@@ -30,8 +30,15 @@ export function OnlineActivityIndicator() {
       return response;
     };
 
+    const ping = () => {
+      fetch("/api/ping", { cache: "no-store" }).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 20_000);
+
     return () => {
       window.fetch = originalFetch;
+      clearInterval(interval);
       if (pulseTimerRef.current) {
         clearTimeout(pulseTimerRef.current);
       }

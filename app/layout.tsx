@@ -42,7 +42,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <Toaster position="bottom-right" />
         <Navbar />
-        {children}
+        <main className="flex-1">{children}</main>
+        <footer className="mt-10">
+          <div className="max-w-7xl mx-auto px-4 lg:px-0 border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
+            Made as part of the PRI HPE CPP Project
+          </div>
+        </footer>
       </body>
     </html>
   );

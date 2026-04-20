@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Settings } from "lucide-react";
+import { Settings, BookOpen } from "lucide-react";
 import Link from "next/link";
 import {
   Dialog,
@@ -30,7 +30,21 @@ export function Navbar() {
         </Link>
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
+        <Link
+          href="/how-we-calculate"
+          className="hidden sm:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md hover:bg-secondary/50 transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          How we calculate
+        </Link>
+        <Link
+          href="/how-we-calculate"
+          aria-label="How we calculate PRI"
+          className="sm:hidden p-2 hover:bg-secondary/50 rounded-full transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <BookOpen className="w-5 h-5" />
+        </Link>
         <OnlineActivityIndicator />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -43,9 +57,11 @@ export function Navbar() {
               Configure Metric Weights
             </DialogTitle>
             <WeightConfig
-                onClose={() => setOpen(false)}
-                onWeightsUpdate={() => window.dispatchEvent(new Event('pri-config-changed'))}
-              />
+              onClose={() => setOpen(false)}
+              onWeightsUpdate={() =>
+                window.dispatchEvent(new Event("pri-config-changed"))
+              }
+            />
           </DialogContent>
         </Dialog>
       </div>

@@ -32,6 +32,12 @@ jobs:
       - name: Build Project Artifacts
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Empty commit before deploy
+        run: |
+          git config user.email "git@harshiyer.in"
+          git config user.name "Proximus"
+          git commit --allow-empty -m "deploy"
+
       - name: Deploy to Vercel (Dev)
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
         

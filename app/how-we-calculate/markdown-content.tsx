@@ -120,14 +120,25 @@ function buildComponents(highlighted: Record<string, string>): Components {
       {children}
     </p>
   ),
-  a: ({ href, children }) => (
-    <a
-      href={href}
-      className="text-[#8ec5ff] underline underline-offset-2 decoration-[#8ec5ff]/40 hover:decoration-[#8ec5ff] transition-colors"
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }) => {
+    const DOC_ROUTES: Record<string, string> = {
+      "./PRI.md": "/how-we-calculate",
+      "PRI.md": "/how-we-calculate",
+      "./GENERATOR.md": "/how-we-generate",
+      "GENERATOR.md": "/how-we-generate",
+      "./SCHEMA.md": "/data",
+      "SCHEMA.md": "/data",
+    };
+    const resolvedHref = (href && DOC_ROUTES[href]) || href;
+    return (
+      <a
+        href={resolvedHref}
+        className="text-[#8ec5ff] underline underline-offset-2 decoration-[#8ec5ff]/40 hover:decoration-[#8ec5ff] transition-colors"
+      >
+        {children}
+      </a>
+    );
+  },
   ul: ({ children }) => (
     <ul className="list-disc list-outside ml-5 space-y-1.5 mb-4 text-[15px] leading-7 text-muted-foreground marker:text-muted-foreground/60">
       {children}

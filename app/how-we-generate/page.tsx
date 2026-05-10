@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHighlighter } from "shiki";
-import { MarkdownContent } from "./markdown-content";
-import { TableOfContents, type TocItem } from "./toc";
-import { ExportPdfButton } from "./export-pdf-button";
+import { MarkdownContent } from "@/app/how-we-calculate/markdown-content";
+import { TableOfContents, type TocItem } from "@/app/how-we-calculate/toc";
+import { ExportPdfButton } from "@/app/how-we-calculate/export-pdf-button";
 
 const SHIKI_LANGS = [
   "ts",
@@ -51,12 +51,13 @@ async function buildHighlightedMap(
 }
 
 export const metadata = {
-  title: "How we calculate PRI @ Rely",
-  description: "End-to-end explanation of the Provisioning Reliability Index.",
+  title: "How We Generate Data @ Rely",
+  description:
+    "Deep dive into how we simulate provisioning data, the failure pipeline, and cascading effects.",
 };
 
 async function loadDoc(): Promise<string> {
-  const file = path.join(process.cwd(), "docs", "PRI.md");
+  const file = path.join(process.cwd(), "docs", "GENERATOR.md");
   return fs.readFile(file, "utf8");
 }
 
@@ -87,7 +88,7 @@ function extractToc(source: string): TocItem[] {
   return items;
 }
 
-export default async function HowWeCalculatePage() {
+export default async function HowWeGeneratePage() {
   const source = await loadDoc();
   const toc = extractToc(source);
   const highlighted = await buildHighlightedMap(source);
@@ -97,14 +98,15 @@ export default async function HowWeCalculatePage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
         <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#8ec5ff] mb-3">
-            PRI CALCULATION
+            DATA GENERATION
           </p>
           <h1 className="text-5xl font-bold tracking-tight mb-3">
-            How we calculate PRI @ Rel<span className="text-[#8ec5ff]">y</span>
+            How we generate data @ Rel
+            <span className="text-[#8ec5ff]">y</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            Deep dive into the Provisioning Reliability Index, the weights
-            system and the computation on the same.
+            Deep dive into how we simulate provisioning data, the failure
+            pipeline, and cascading effects.
           </p>
         </div>
 
@@ -112,10 +114,12 @@ export default async function HowWeCalculatePage() {
           <article className="relative group rounded-xl border border-border/40 bg-[#111]/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
             <MarkdownContent source={source} highlighted={highlighted} />
 
-            {/* Overlay control: keep it out of the markdown flow so "first:" heading styles still apply */}
             <div className="print:hidden pointer-events-none absolute top-4 right-4 z-10">
               <div className="pointer-events-auto">
-                <ExportPdfButton markdown={source} filename="how-we-calculate-pri" />
+                <ExportPdfButton
+                  markdown={source}
+                  filename="how-we-generate-data"
+                />
               </div>
             </div>
           </article>

@@ -24,10 +24,31 @@ export function ExportPdfButton({
       onClick={async () => {
         setIsExporting(true);
         try {
+          // Fix links in markdown for PDF context
+          let processedMarkdown = markdown;
+          const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+          
+          const linkMap: Record<string, string> = {
+            "./PRI.md": "/how-we-calculate",
+            "PRI.md": "/how-we-calculate",
+            "./GENERATOR.md": "/how-we-generate",
+            "GENERATOR.md": "/how-we-generate",
+            "./SCHEMA.md": "/data",
+            "SCHEMA.md": "/data",
+          };
+
+          for (const [md, route] of Object.entries(linkMap)) {
+            // Replace both the target and potentially the text if it looks like a filename
+            // This is a simple regex replacement for the link targets
+            const escapedMd = md.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const re = new RegExp(`\\]\\(${escapedMd}\\)`, "g");
+            processedMarkdown = processedMarkdown.replace(re, `](${baseUrl}${route})`);
+          }
+
           const res = await fetch("/api/pdf", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ markdown, filename }),
+            body: JSON.stringify({ markdown: processedMarkdown, filename }),
             cache: "no-store",
           });
           if (!res.ok) {

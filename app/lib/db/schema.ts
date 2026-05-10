@@ -2,12 +2,12 @@ import { mysqlTable, varchar, int, text, datetime, decimal, float, mysqlEnum, bi
 import { relations, sql } from 'drizzle-orm';
 
 // Zones table
-export const zones = mysqlTable('zones', {
+export const zones = mysqlTable('zones2', {
   zone_id: varchar('zone_id', { length: 20 }).primaryKey(),
 });
 
 // Compute Server 2 table
-export const compute_server2 = mysqlTable('compute_server2', {
+export const compute_server2 = mysqlTable('compute_server3', {
   id: int('id').autoincrement().primaryKey(),
   parent_server_id: int('parent_server_id'),
   node_type: mysqlEnum('node_type', ['HOST', 'VM']).notNull(),

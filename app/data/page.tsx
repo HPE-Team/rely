@@ -21,7 +21,7 @@ export default async function DataPage() {
   return (
     <div className="bg-background">
       <div className="max-w-[90rem] mx-auto px-4 lg:px-8 py-10">
-        <div className="mb-8">
+        <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#8ec5ff] mb-3">
             DATABASE
           </p>

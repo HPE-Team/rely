@@ -414,7 +414,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
 
           {/* Table */}
           <div className="rounded-xl border border-border/40 bg-[#111]/60 overflow-hidden shadow-2xl">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto scrollbar-custom">
               <table className="w-full text-sm border-collapse min-w-[100rem]">
                 <thead>
                   <tr className="border-b border-border/40 bg-[#0d0d0d]">

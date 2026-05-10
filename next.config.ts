@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     "/api/pdf": [
       "./node_modules/md-to-pdf/**/*",
       "./node_modules/@sparticuz/chromium/**/*",
+      "./fonts/**/*",
     ],
   },
 };

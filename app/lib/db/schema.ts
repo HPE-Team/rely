@@ -6,31 +6,36 @@ export const zones = mysqlTable('zones2', {
   zone_id: varchar('zone_id', { length: 20 }).primaryKey(),
 });
 
+export const NODE_TYPES = ['HOST', 'VM'] as const;
+export const STATUSES = ['provisioned', 'failed'] as const;
+export const ERROR_TYPES = [
+  'HARDWARE_FAILURE',
+  'RESOURCE_FAILURE',
+  'STORAGE_FAILURE',
+  'NETWORK_FAILURE',
+  'IP_FAILURE',
+  'POWER_FAILURE',
+  'HOST_FAILURE',
+] as const;
+export const POWER_STATES = ['on', 'off'] as const;
+
 // Compute Server 2 table
 export const compute_server2 = mysqlTable('compute_server3', {
   id: int('id').autoincrement().primaryKey(),
   parent_server_id: int('parent_server_id'),
-  node_type: mysqlEnum('node_type', ['HOST', 'VM']).notNull(),
-  status: mysqlEnum('status', ['provisioned', 'failed']).notNull(),
+  node_type: mysqlEnum('node_type', NODE_TYPES).notNull(),
+  status: mysqlEnum('status', STATUSES).notNull(),
   status_percent: decimal('status_percent', { precision: 5, scale: 2 }),
   provision_percent: decimal('provision_percent', { precision: 5, scale: 2 }).notNull(),
   status_message: text('status_message'),
-  error_type: mysqlEnum('error_type', [
-    'HARDWARE_FAILURE',
-    'RESOURCE_FAILURE',
-    'STORAGE_FAILURE',
-    'NETWORK_FAILURE',
-    'IP_FAILURE',
-    'POWER_FAILURE',
-    'HOST_FAILURE',
-  ]),
+  error_type: mysqlEnum('error_type', ERROR_TYPES),
   error_message: varchar('error_message', { length: 255 }),
   provision_time: float('provision_time').notNull(),
   status_date: datetime('status_date').notNull(),
   max_memory: int('max_memory').notNull(),
   max_cores: int('max_cores').notNull(),
   max_storage: int('max_storage').notNull(),
-  power_state: varchar('power_state', { length: 10 }).notNull(),
+  power_state: mysqlEnum('power_state', POWER_STATES).notNull(),
   zone_id: varchar('zone_id', { length: 20 }).notNull(),
 });
 

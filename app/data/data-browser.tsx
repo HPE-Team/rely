@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Loader2,
   Edit2,
   Trash2,
@@ -24,6 +25,7 @@ import {
 } from "@/app/components/ui/dialog";
 import { MarkdownContent } from "@/app/how-we-calculate/markdown-content";
 import { sileo } from "sileo";
+import { NODE_TYPES, STATUSES, ERROR_TYPES, POWER_STATES } from "@/app/lib/db/schema";
 
 /* ---------- types ---------- */
 
@@ -62,22 +64,22 @@ const COLUMNS: {
   width: string;
   editable: boolean;
 }[] = [
-  { key: "id", label: "ID", width: "w-16", editable: false },
-  { key: "parent_server_id", label: "Parent", width: "w-20", editable: true },
-  { key: "node_type", label: "Type", width: "w-24", editable: true },
-  { key: "status", label: "Status", width: "w-32", editable: true },
-  { key: "error_type", label: "Error Type", width: "w-40", editable: true },
-  { key: "error_message", label: "Error Msg", width: "w-48", editable: true },
-  { key: "provision_percent", label: "Prov %", width: "w-24", editable: true },
-  { key: "provision_time", label: "Prov Time", width: "w-28", editable: true },
-  { key: "zone_id", label: "Zone", width: "w-28", editable: true },
-  { key: "power_state", label: "Power", width: "w-24", editable: true },
-  { key: "max_memory", label: "Memory", width: "w-24", editable: true },
-  { key: "max_cores", label: "Cores", width: "w-20", editable: true },
-  { key: "max_storage", label: "Storage", width: "w-24", editable: true },
-  { key: "status_percent", label: "Health %", width: "w-24", editable: true },
-  { key: "status_date", label: "Date", width: "w-48", editable: true },
-];
+    { key: "id", label: "ID", width: "w-16", editable: false },
+    { key: "parent_server_id", label: "Parent", width: "w-20", editable: true },
+    { key: "node_type", label: "Type", width: "w-24", editable: true },
+    { key: "status", label: "Status", width: "w-32", editable: true },
+    { key: "error_type", label: "Error Type", width: "w-40", editable: true },
+    { key: "error_message", label: "Error Msg", width: "w-48", editable: true },
+    { key: "provision_percent", label: "Prov %", width: "w-24", editable: true },
+    { key: "provision_time", label: "Prov Time", width: "w-28", editable: true },
+    { key: "zone_id", label: "Zone", width: "w-28", editable: true },
+    { key: "power_state", label: "Power", width: "w-24", editable: true },
+    { key: "max_memory", label: "Memory", width: "w-24", editable: true },
+    { key: "max_cores", label: "Cores", width: "w-20", editable: true },
+    { key: "max_storage", label: "Storage", width: "w-24", editable: true },
+    { key: "status_percent", label: "Health %", width: "w-24", editable: true },
+    { key: "status_date", label: "Date", width: "w-48", editable: true },
+  ];
 
 const ZONES = ["zone-a", "zone-b", "zone-c", "zone-d", "zone-e"];
 const PAGE_SIZES = [25, 50, 100];
@@ -95,11 +97,11 @@ function formatCell(key: keyof ComputeServer, value: unknown): string {
     const d = new Date(String(value));
     return Number.isFinite(d.getTime())
       ? d.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
       : String(value);
   }
   return String(value);
@@ -109,11 +111,10 @@ function statusBadge(status: string) {
   const ok = status === "provisioned";
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
-        ok
+      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${ok
           ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
           : "bg-red-500/10 text-red-400 ring-1 ring-red-500/20"
-      }`}
+        }`}
     >
       <span
         className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-emerald-400" : "bg-red-400"}`}
@@ -127,11 +128,10 @@ function typeBadge(type: string) {
   const isHost = type === "HOST";
   return (
     <span
-      className={`text-xs font-mono font-medium px-2.5 py-1 rounded ${
-        isHost
+      className={`text-xs font-mono font-medium px-2.5 py-1 rounded ${isHost
           ? "bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20"
           : "bg-violet-500/10 text-violet-400 ring-1 ring-violet-500/20"
-      }`}
+        }`}
     >
       {type}
     </span>
@@ -142,11 +142,10 @@ function powerBadge(state: string) {
   const on = state === "on";
   return (
     <span
-      className={`text-xs font-medium px-2.5 py-1 rounded ${
-        on
+      className={`text-xs font-medium px-2.5 py-1 rounded ${on
           ? "bg-emerald-500/10 text-emerald-400"
           : "bg-zinc-500/10 text-zinc-500"
-      }`}
+        }`}
     >
       {state}
     </span>
@@ -376,22 +375,20 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
       <div className="flex items-center gap-1 mb-6 border-b border-border/40">
         <button
           onClick={() => setTab("table")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
-            tab === "table"
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${tab === "table"
               ? "border-[#8ec5ff] text-[#8ec5ff]"
               : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           <Table2 className="w-4 h-4" />
           Table
         </button>
         <button
           onClick={() => setTab("schema")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${
-            tab === "schema"
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${tab === "schema"
               ? "border-[#8ec5ff] text-[#8ec5ff]"
               : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           <FileText className="w-4 h-4" />
           Schema
@@ -412,47 +409,56 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
           <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#0d0d0d] p-3 rounded-lg border border-border/40">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">Zone</span>
-              <select
-                value={zoneFilter}
-                onChange={(e) => setZoneFilter(e.target.value)}
-                className="h-9 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
-              >
-                <option value="">All Zones</option>
-                {ZONES.map((z) => (
-                  <option key={z} value={z}>
-                    {z}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={zoneFilter}
+                  onChange={(e) => setZoneFilter(e.target.value)}
+                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                >
+                  <option value="">All Zones</option>
+                  {ZONES.map((z) => (
+                    <option key={z} value={z}>
+                      {z}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">Type</span>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="h-9 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
-              >
-                <option value="">All Types</option>
-                <option value="HOST">HOST</option>
-                <option value="VM">VM</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                >
+                  <option value="">All Types</option>
+                  <option value="HOST">HOST</option>
+                  <option value="VM">VM</option>
+                </select>
+                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              </div>
             </div>
 
             <div className="ml-auto flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-muted-foreground">Page Size</span>
-                <select
-                  value={pagination.limit}
-                  onChange={(e) => changePageSize(Number(e.target.value))}
-                  className="h-9 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
-                >
-                  {PAGE_SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={pagination.limit}
+                    onChange={(e) => changePageSize(Number(e.target.value))}
+                    className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                  >
+                    {PAGE_SIZES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                </div>
               </div>
 
               <div className="h-4 w-px bg-border/40" />
@@ -469,11 +475,10 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                   onClick={() => setMenuOpen((o) => !o)}
                   aria-label="Table actions"
                   title="Actions"
-                  className={`h-8 w-8 p-0 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
-                    menuOpen
+                  className={`h-8 w-8 p-0 rounded-full flex items-center justify-center transition-all cursor-pointer border ${menuOpen
                       ? "bg-background/80 border-border/60 opacity-100"
                       : "bg-background/30 border-border/30 opacity-50 hover:opacity-100 hover:bg-background/60 hover:border-border/60"
-                  }`}
+                    }`}
                 >
                   {isExporting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -602,16 +607,15 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                     else if (currentPage <= 3) page = i + 1;
                     else if (currentPage >= totalPages - 2) page = totalPages - 4 + i;
                     else page = currentPage - 2 + i;
-                    
+
                     return (
                       <button
                         key={page}
                         onClick={() => goPage(page)}
-                        className={`h-8 w-8 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${
-                          page === currentPage
+                        className={`h-8 w-8 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${page === currentPage
                             ? "bg-[#8ec5ff] text-background shadow-[0_0_15px_rgba(142,197,255,0.3)]"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                        }`}
+                          }`}
                       >
                         {page}
                       </button>
@@ -654,20 +658,45 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {COLUMNS.filter(c => c.editable).map((col) => (
-              <div key={col.key} className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  {col.label}
-                </label>
-                <input
-                  type="text"
-                  value={String(editValues[col.key] ?? "")}
-                  onChange={(e) => setEditValues(prev => ({ ...prev, [col.key]: e.target.value }))}
-                  className="w-full h-10 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 transition-all"
-                  placeholder={`Enter ${col.label.toLowerCase()}`}
-                />
-              </div>
-            ))}
+            {COLUMNS.filter(c => c.editable).map((col) => {
+              const isEnum = col.key === "node_type" || col.key === "status" || col.key === "error_type" || col.key === "power_state";
+
+              return (
+                <div key={col.key} className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    {col.label}
+                  </label>
+                  {isEnum ? (
+                    <div className="relative">
+                      <select
+                        value={String(editValues[col.key] ?? "")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const finalVal = val === "" && col.key === "error_type" ? null : val;
+                          setEditValues(prev => ({ ...prev, [col.key]: finalVal }));
+                        }}
+                        className="appearance-none w-full h-10 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 transition-all cursor-pointer"
+                      >
+                        {col.key === "error_type" && <option value="">None</option>}
+                        {col.key === "node_type" && NODE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        {col.key === "status" && STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                        {col.key === "error_type" && ERROR_TYPES.map(err => <option key={err} value={err}>{err}</option>)}
+                        {col.key === "power_state" && POWER_STATES.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={String(editValues[col.key] ?? "")}
+                      onChange={(e) => setEditValues(prev => ({ ...prev, [col.key]: e.target.value }))}
+                      className="w-full h-10 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 transition-all"
+                      placeholder={`Enter ${col.label.toLowerCase()}`}
+                    />
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <DialogFooter className="gap-3 mt-4">

@@ -24,7 +24,7 @@
 | max_memory | INT | Maximum memory allocated (MB); fixed for hosts, variable for VMs. |
 | max_cores | INT | Number of CPU cores; fixed for hosts, variable for VMs. |
 | max_storage | INT | Storage capacity (GB). |
-| power_state | VARCHAR(10) | Power state of the node ('on' or 'off'); affects failure logic. |
+| power_state | ENUM | Power state of the node ('on' or 'off'); affects failure logic. |
 | zone_id | VARCHAR(20) (FK -> zones.zone_id) | Availability zone identifier (zone-a, zone-b, zone-c, zone-d). |
 
 ## Table: zone_metrics
@@ -48,6 +48,7 @@
 | --- | --- |
 | compute_server2.node_type | 'HOST', 'VM' |
 | compute_server2.status | 'provisioned', 'failed' |
+| compute_server2.power_state | 'on', 'off' |
 | compute_server2.error_type | 'HARDWARE_FAILURE', 'RESOURCE_FAILURE', 'STORAGE_FAILURE', 'NETWORK_FAILURE', 'IP_FAILURE', 'POWER_FAILURE', 'HOST_FAILURE' |
 
 ## Constraints

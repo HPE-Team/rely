@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,6 +10,8 @@ import {
   Table2,
   FileText,
   Save,
+  MoreVertical,
+  FileDown,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -194,6 +196,55 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<ComputeServer | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Export / actions menu state
+  const [isExporting, setIsExporting] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  /* ---------- csv export ---------- */
+
+  async function exportCsv() {
+    setIsExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (zoneFilter) params.set("zone_id", zoneFilter);
+      if (typeFilter) params.set("node_type", typeFilter);
+
+      const url = `/api/compute-servers/export${params.toString() ? `?${params}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(await res.text());
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const nameMatch = disposition.match(/filename="([^"]+)"/);
+      const filename = nameMatch?.[1] ?? "compute-servers.csv";
+
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(href);
+
+      sileo.success({ title: "CSV exported successfully", fill: "#171717" });
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      sileo.error({ title: "Export failed", fill: "#171717" });
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   /* ---------- data fetching ---------- */
 
@@ -409,6 +460,43 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
               <span className="text-xs font-mono text-muted-foreground">
                 {pagination.total.toLocaleString()} records
               </span>
+
+              <div className="h-4 w-px bg-border/40" />
+
+              {/* Actions 3-dot menu */}
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setMenuOpen((o) => !o)}
+                  aria-label="Table actions"
+                  title="Actions"
+                  className={`h-8 w-8 p-0 rounded-full flex items-center justify-center transition-all cursor-pointer border ${
+                    menuOpen
+                      ? "bg-background/80 border-border/60 opacity-100"
+                      : "bg-background/30 border-border/30 opacity-50 hover:opacity-100 hover:bg-background/60 hover:border-border/60"
+                  }`}
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="w-4 h-4" />
+                  )}
+                </button>
+
+                {menuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-1.5">
+                      <button
+                        onClick={() => { setMenuOpen(false); exportCsv(); }}
+                        disabled={isExporting}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-foreground hover:bg-secondary/50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                      >
+                        <FileDown className="w-4 h-4 text-muted-foreground" />
+                        <span>Export to CSV</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

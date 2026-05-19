@@ -103,34 +103,36 @@ export function Navbar() {
               />
             </button>
 
-            {docsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50">
-                <div className="p-1.5">
-                  {DOCS_LINKS.map((link) => {
-                    const Icon = link.icon;
-                    const active = pathname === link.href;
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
-                          ? "bg-[#8ec5ff]/10 text-[#8ec5ff]"
-                          : "text-foreground hover:bg-secondary/50"
-                          }`}
-                      >
-                        <Icon className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">{link.label}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {link.description}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+            <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+              docsOpen
+                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
+            }`}>
+              <div className="p-1.5">
+                {DOCS_LINKS.map((link) => {
+                  const Icon = link.icon;
+                  const active = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
+                        ? "bg-[#8ec5ff]/10 text-[#8ec5ff]"
+                        : "text-foreground hover:bg-secondary/50"
+                        }`}
+                    >
+                      <Icon className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{link.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {link.description}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Docs dropdown — mobile */}
@@ -143,25 +145,27 @@ export function Navbar() {
               <BookOpen className="w-5 h-5" />
             </button>
 
-            {docsOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50">
-                <div className="p-1.5">
-                  {DOCS_LINKS.map((link) => {
-                    const Icon = link.icon;
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-secondary/50"
-                      >
-                        <Icon className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm">{link.label}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
+            <div className={`absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+              docsOpen
+                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
+            }`}>
+              <div className="p-1.5">
+                {DOCS_LINKS.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-secondary/50"
+                    >
+                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{link.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
 
           <OnlineActivityIndicator />

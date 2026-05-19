@@ -16,14 +16,20 @@ export function parsePRIConfig(qs: string | null): Partial<PRIConfig> {
   }
 }
 
-/** Client-only: reads saved config from localStorage, migrating legacy key. */
+/** Client-only: reads saved config from localStorage, migrating legacy keys. */
 export function readLocalConfig(): Partial<PRIConfig> {
   if (typeof window === 'undefined') return {};
 
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
     try {
-      return JSON.parse(saved) as Partial<PRIConfig>;
+      const parsed = JSON.parse(saved) as Record<string, unknown>;
+      // Migrate: drop the old iqrMultiplier key (replaced by outlierResourceImpact)
+      if ('iqrMultiplier' in parsed) {
+        delete parsed['iqrMultiplier'];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      }
+      return parsed as Partial<PRIConfig>;
     } catch {
       return {};
     }

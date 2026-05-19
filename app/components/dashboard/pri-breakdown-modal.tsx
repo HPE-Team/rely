@@ -31,7 +31,9 @@ const CAUSE: Record<string, string> = {
   "Error severity":
     "Weighted 10%. Sum of (error count × per-type weight) ÷ total servers. Critical types (HARDWARE / STORAGE / POWER / HOST_FAILURE) cost the most.",
   "Provision time outliers":
-    "Weighted 5%. Share of provisions above the Tukey upper fence (Q3 + k × IQR). Lower iqrMultiplier in settings for stricter detection.",
+    "Weighted 5%. Share of provisions exceeding their per-VM dynamic fence. Each VM's fence = Q3 + k_i × IQR, where k_i (base 1.5) scales with the VM's resource requirements vs fleet median. Adjust resource impact weights in Settings.",
+  "Fleet deviation":
+    "Post-hoc penalty applied when this zone's PRI falls below the fleet-wide baseline. Penalty = max(0, fleetPRI − zonePRI) × impact weight. Adjust impact in Settings → Fleet Deviation.",
 };
 
 export function PRIBreakdownModal({

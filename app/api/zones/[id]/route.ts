@@ -12,6 +12,7 @@ const mockBreakdown = (score: number): PRIBreakdown => ({
   stabilityLoss: (100 - score) * 0.4,
   errorLoss: (100 - score) * 0.15,
   outlierLoss: (100 - score) * 0.05,
+  fleetDeviationLoss: 0,
   total: score,
   contributions: [
     { label: 'Success rate', points: -(100 - score) * 0.4 },
@@ -36,10 +37,12 @@ const getMockDetail = (zoneId: string) => ({
     failed_servers: 3,
     cascaded_failures: 0,
     outlier_ratio: 0.04,
-    outlier_upper_fence: 120,
+    outlier_default_fence: 120,
+    fleet_pri_score: null,
+    fleet_deviation_penalty: 0,
     outlier_servers: [
-      { id: 42, node_type: 'VM', provision_time: 145.2, status: 'provisioned', error_type: null },
-      { id: 51, node_type: 'VM', provision_time: 132.8, status: 'provisioned', error_type: null },
+      { id: 42, node_type: 'VM', provision_time: 145.2, status: 'provisioned', error_type: null, k: 1.5, fence: 120, max_memory: 8192, max_cores: 4, max_storage: 100 },
+      { id: 51, node_type: 'VM', provision_time: 132.8, status: 'provisioned', error_type: null, k: 1.5, fence: 120, max_memory: 4096, max_cores: 2, max_storage: 50 },
     ],
     color: 'green',
   },
@@ -95,10 +98,11 @@ export async function GET(
     }
 
     try {
-      const servers = await db
-        .select()
-        .from(compute_server2)
-        .where(eq(compute_server2.zone_id, zoneId));
+      // Fetch zone servers and all servers in parallel for fleet PRI
+      const [servers, allServers] = await Promise.all([
+        db.select().from(compute_server2).where(eq(compute_server2.zone_id, zoneId)),
+        db.select().from(compute_server2),
+      ]);
 
       if (servers.length === 0) {
         return NextResponse.json(
@@ -118,9 +122,16 @@ export async function GET(
         provision_percent: Number(s.provision_percent),
         provision_time: s.provision_time,
         error_type: s.error_type,
+        max_memory: s.max_memory,
+        max_cores: s.max_cores,
+        max_storage: s.max_storage,
       });
 
-      const zonePRIMetrics = aggregatePRIMetrics(servers.map(toInput), config);
+      // Compute fleet PRI without deviation penalty (it is the baseline reference)
+      const fleetPRIMetrics = aggregatePRIMetrics(allServers.map(toInput), config);
+      const fleetPRIScore = fleetPRIMetrics.priScore;
+
+      const zonePRIMetrics = aggregatePRIMetrics(servers.map(toInput), config, fleetPRIScore);
       const hostPRIMetrics = aggregatePRIMetrics(hosts.map(toInput), config);
       const vmPRIMetrics = aggregatePRIMetrics(vms.map(toInput), config);
 
@@ -153,18 +164,32 @@ export async function GET(
 
       const r2 = (n: number) => Math.round(n * 100) / 100;
 
-      const fence = zonePRIMetrics.outlierUpperFence;
+      // Build outlier server list using per-server dynamic fences
+      const perServerFences = zonePRIMetrics.outlierPerServerFences;
+      const fenceById = new Map(perServerFences.map(f => [f.id, f]));
+
       const outlierServers =
-        zonePRIMetrics.outlierRatio > 0 && Number.isFinite(fence)
+        perServerFences.length > 0
           ? servers
-              .filter((s: any) => s.provision_time > fence)
-              .map((s: any) => ({
-                id: s.id,
-                node_type: s.node_type,
-                provision_time: r2(s.provision_time),
-                status: s.status,
-                error_type: s.error_type,
-              }))
+              .filter((s: any) => {
+                const sf = fenceById.get(s.id);
+                return sf !== undefined && s.provision_time > sf.fence;
+              })
+              .map((s: any) => {
+                const sf = fenceById.get(s.id)!;
+                return {
+                  id: s.id,
+                  node_type: s.node_type,
+                  provision_time: r2(s.provision_time),
+                  status: s.status,
+                  error_type: s.error_type,
+                  k: r2(sf.k),
+                  fence: r2(sf.fence),
+                  max_memory: sf.max_memory,
+                  max_cores: sf.max_cores,
+                  max_storage: sf.max_storage,
+                };
+              })
               .sort((a: any, b: any) => b.provision_time - a.provision_time)
           : [];
 
@@ -185,7 +210,9 @@ export async function GET(
             failed_servers: zonePRIMetrics.failedServers,
             cascaded_failures: zonePRIMetrics.cascadedFailures,
             outlier_ratio: r2(zonePRIMetrics.outlierRatio * 100),
-            outlier_upper_fence: r2(zonePRIMetrics.outlierUpperFence),
+            outlier_default_fence: r2(zonePRIMetrics.outlierDefaultFence),
+            fleet_pri_score: r2(fleetPRIScore),
+            fleet_deviation_penalty: r2(zonePRIMetrics.fleetDeviationLoss),
             outlier_servers: outlierServers,
             color: zonePRIMetrics.color,
           },

@@ -68,16 +68,18 @@ The remaining rows are called `effectiveServers`. The dropped count is surfaced 
 ## 4. The formula
 
 ```ts
-PRI = 100
-    − (100 − successRate)      × 0.80   // successLoss
-    − (100 − stabilityScore)   × 0.20   // stabilityLoss
-    − errorPenalty             × 0.10   // errorLoss
-    − outlierPenalty           × 0.05   // outlierLoss
+rawPRI = 100
+       − (100 − successRate)      × 0.80   // successLoss
+       − (100 − stabilityScore)   × 0.20   // stabilityLoss
+       − errorPenalty             × 0.10   // errorLoss
+       − outlierPenalty           × 0.05   // outlierLoss
 
 // clamp to [0, 100]
+
+PRI = clamp(rawPRI − fleetDeviationLoss, 0, 100)
 ```
 
-The two positive weights (`0.80 + 0.20`) sum to **1.0**, so a perfect pool lands exactly on 100.
+The four component weights (`0.80 + 0.20 + 0.10 + 0.05`) describe the pool on its own. The fleet deviation term (§5.5) is a **post-hoc deduction** applied after clamping. It is separate and does not change the weight ratios — a perfect pool still lands exactly on 100 (it has no deviation to penalize).
 
 Why each weight:
 
@@ -87,6 +89,7 @@ Why each weight:
 | Stability | **0.20** | Variance matters, but a consistent 100%-success pool with varying provision times shouldnt tank the score by itself. Still something to look at :) |
 | Error severity | **0.10** | Amplifies failures that indicate worse underlying state depending on criticality of error (pre set in code rn). |
 | Outliers | **0.05** | Cut points for long-tail provisions. Real signal, rare. E.g. a deployment taking 5 mins when the median is 2 mins. |
+| Fleet deviation | **configurable** | Post-hoc. See §5.5. |
 
 Weights are a **configurable choice**, not a derived number. They're exposed so they can be tuned easily on the dashboard depending on the priority.
 
@@ -142,22 +145,84 @@ Default weights (tunable live via the settings panel):
 | `IP_FAILURE` | 0.5 | medium |
 | `RESOURCE_FAILURE` | 0.3 | low |
 
-### 5.4 outlierPenalty - IQR upper fence
+### 5.4 outlierPenalty - dynamic IQR upper fence
 
-We perform [Tukey's Rule](https://en.wikipedia.org/wiki/Tukey's_range_test) on the provision-time distribution:
+We perform [Tukey's Rule](https://en.wikipedia.org/wiki/Tukey's_range_test) on the provision-time distribution, but with a **per-VM multiplier** that reflects how resource-heavy each VM is. Larger VMs naturally take longer to provision; giving them a wider fence avoids false-positives.
+
+**Step 1 — compute the fleet resource medians** (over all servers with valid resource data):
 
 ```ts
-Q1, Q3 = 25th and 75th percentiles
-IQR    = Q3 − Q1
-fence  = Q3 + k × IQR            // k = iqrMultiplier, default 1.5, this can also be changed on the dashboard
+med_mem  = median(max_memory  values in pool)
+med_cpu  = median(max_cores   values in pool)
+med_stor = median(max_storage values in pool)
+```
 
-outlierRatio   = (count above fence) / totalServers
+**Step 2 — compute per-VM k_i**:
+
+```ts
+ratio_mem  = vm.max_memory  > 0 ? vm.max_memory  / med_mem  − 1 : 0
+ratio_cpu  = vm.max_cores   > 0 ? vm.max_cores   / med_cpu  − 1 : 0
+ratio_stor = vm.max_storage > 0 ? vm.max_storage / med_stor − 1 : 0
+
+k_i = clamp(
+  1.5
+  + α_mem  × ratio_mem
+  + α_cpu  × ratio_cpu
+  + α_stor × ratio_stor,
+  0.5,   // floor  — never too lenient for very small VMs
+  4.0    // ceiling — very large VMs still have a finite limit
+)
+```
+
+`α_mem`, `α_cpu`, `α_stor` are the **Outlier Resource Impact** sliders in Settings (defaults: 0.3, 0.3, 0.2). A VM with twice the median memory and `α_mem = 0.3` gets `k_i = 1.5 + 0.3 × 1 = 1.8`.
+
+If a VM has no resource data, all ratios are 0 and `k_i = 1.5` (the classic Tukey default).
+
+**Step 3 — compute each VM's personal fence**:
+
+```ts
+Q1, Q3 = 25th and 75th percentiles of provision_times in pool
+IQR    = Q3 − Q1
+fence_i = Q3 + k_i × IQR
+```
+
+**Step 4 — score**:
+
+```ts
+outlierCount   = count of VMs where provision_time > fence_i
+outlierRatio   = outlierCount / totalServers
 outlierPenalty = outlierRatio × 100
 
 loss = outlierPenalty × 0.05
 ```
 
-This is the **only** provision-time tail signal. There is no absolute "ideal provision time" - the pool's own median is the reference. A slow-but-consistent fleet loses nothing here; a fast fleet with a few stragglers does. Can change if discussed accordingly. Maybe if theres a target deployment time for a specific configuration that can act as a guide.
+This is the **only** provision-time tail signal. There is no absolute "ideal provision time" — the pool's own distribution is the reference. A slow-but-consistent fleet loses nothing here; a fast fleet with a few stragglers does.
+
+### 5.5 fleetDeviationLoss - fleet-relative penalty
+
+The four terms above measure a zone *in isolation*. Fleet deviation adds a **relative penalty**: a zone that falls below the fleet-wide PRI baseline gets extra points deducted, proportional to how far it lags.
+
+```ts
+// Compute fleet PRI first (no deviation applied — avoids circular dependency)
+fleetPRI = aggregatePRI(allServersAcrossAllZones)
+
+// Then for each zone
+fleetDeviationLoss = max(0, fleetPRI − rawZonePRI) × fleetDeviationImpact
+```
+
+Key properties:
+
+- **One-sided.** Zones *above* the fleet baseline receive zero deduction. Only laggards are penalized.
+- **Post-hoc.** Applied after the four-term PRI is clamped to [0, 100]. It is not part of the 100% weight pool; the normal weights still sum to 1.
+- **Configurable.** `fleetDeviationImpact` (default `0.05`) is a separate slider in Settings (range 0–0.2). Set it to 0 to disable entirely.
+- **Fleet-aware.** The fleet PRI is recomputed from scratch across all zones every request — it is never an average of zone PRIs, and it ignores the deviation penalty itself when acting as the baseline.
+
+**Example:**
+- Fleet PRI = 88, Zone PRI (raw) = 74, `fleetDeviationImpact` = 0.05
+- `fleetDeviationLoss = (88 − 74) × 0.05 = 0.70`
+- Final zone PRI = max(0, 74 − 0.70) ≈ 73.3
+
+The loss is intentionally small by default — it nudges the ranking without masking the absolute score. Raise `fleetDeviationImpact` if you want zone-vs-fleet comparisons to carry more weight.
 
 ---
 
@@ -225,15 +290,18 @@ Clicking a PRI card opens a breakdown built from the same numbers:
 
 ```ts
 {
-  base:           100,
-  successLoss:    (100 − successRate)    × 0.80,
-  stabilityLoss:  (100 − stabilityScore) × 0.20,
-  errorLoss:      errorPenalty           × 0.10,
-  outlierLoss:    outlierPenalty         × 0.05,
-  total:          clamp(100 − sum(losses), 0, 100),
-  contributions:  [sorted by loss, largest first],
+  base:                100,
+  successLoss:         (100 − successRate)    × 0.80,
+  stabilityLoss:       (100 − stabilityScore) × 0.20,
+  errorLoss:           errorPenalty           × 0.10,
+  outlierLoss:         outlierPenalty         × 0.05,
+  fleetDeviationLoss:  max(0, fleetPRI − rawPRI) × fleetDeviationImpact,
+  total:               clamp(100 − sum(losses), 0, 100),
+  contributions:       [sorted by loss, largest first],
 }
 ```
+
+`fleetDeviationLoss` only appears in contributions when it is greater than zero. It is shown in blue in the breakdown modal to distinguish it from the within-pool losses.
 
 Each scope (overall / hosts / VMs) carries its own breakdown so you can tell *which pool* the loss is coming from.
 
@@ -259,7 +327,17 @@ One config blob drives everything:
 ```ts
 type PRIConfig = {
   errorWeights: Record<ErrorType, number>;
-  iqrMultiplier: number;                           // default 1.5
+
+  // Dynamic per-VM Tukey fence (replaces the old single iqrMultiplier)
+  outlierResourceImpact: {
+    memory:  number;   // α_mem  — default 0.3
+    cores:   number;   // α_cpu  — default 0.3
+    storage: number;   // α_stor — default 0.2
+  };
+
+  // Fleet deviation post-hoc penalty
+  fleetDeviationImpact: number;                    // default 0.05, range [0, 0.2]
+
   colorThresholds: {
     pri:           { green: number; amber: number };
     criticalRatio: { amber: number; red: number };
@@ -267,6 +345,8 @@ type PRIConfig = {
   };
 };
 ```
+
+`outlierResourceImpact` replaces the old single `iqrMultiplier`. Old saved configs with `iqrMultiplier` are silently migrated on load — the key is dropped and the new defaults are used.
 
 We store this in the browser localStorage for the user to update and view accordingly. Can move some famous templates to server side if thats ever a use case.
 

@@ -7,7 +7,8 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
-import { formatZoneLabel } from "@/app/lib/utils";
+import Image from "next/image";
+import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
 import Link from "next/link";
 import type { ZoneColor } from "@/app/lib/calculations/pri";
 
@@ -47,13 +48,28 @@ export function ZoneOverviewCard({
   color,
 }: ZoneOverviewProps) {
   const pillClass = color ? COLOR_PILL[color] : SCORE_PILL(pri_score);
+  const logo = getZoneLogo(zone_id);
+  const label = formatZoneLabel(zone_id);
 
   return (
     <Link href={`/zone/${zone_id}`}>
       <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-neutral-600">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>{formatZoneLabel(zone_id)}</CardTitle>
+            <CardTitle>
+              <div className="flex items-center gap-2.5">
+                {logo && (
+                  <Image
+                    src={logo}
+                    alt={label}
+                    width={22}
+                    height={22}
+                    className="rounded object-contain shrink-0"
+                  />
+                )}
+                <span className="font-sans">{label}</span>
+              </div>
+            </CardTitle>
             <div className={`px-2 py-[0.5] rounded-lg font-bold text-lg ${pillClass}`}>
               {pri_score.toFixed(1)}
             </div>

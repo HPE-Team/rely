@@ -16,6 +16,23 @@ const nextConfig: NextConfig = {
       "./fonts/**/*",
     ],
   },
+
+  // Disable Next.js image optimization pipeline and its disk cache.
+  images: {
+    unoptimized: true,
+  },
+
+  // Prevent browsers from caching zone logo assets.
+  async headers() {
+    return [
+      {
+        source: "/zones/:file*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

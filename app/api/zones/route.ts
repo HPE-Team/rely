@@ -57,41 +57,49 @@ export async function GET(request: Request) {
         const allZones = await db.select().from(zones);
 
         if (allZones.length > 0) {
-          const zonesWithPRI = await Promise.all(
-            allZones.map(async (zone: any) => {
-              const servers = await db!
-                .select()
-                .from(compute_server2)
-                .where(eq(compute_server2.zone_id, zone.zone_id));
+          // Fetch all servers once so we can compute fleet PRI for deviation penalty
+          const allServers = await db.select().from(compute_server2);
 
-              const metrics = aggregatePRIMetrics(
-                servers.map((s: any) => ({
-                  id: s.id,
-                  parent_server_id: s.parent_server_id,
-                  node_type: s.node_type,
-                  status: s.status,
-                  provision_percent: Number(s.provision_percent),
-                  provision_time: s.provision_time,
-                  error_type: s.error_type,
-                })),
-                config,
-              );
+          const toInput = (s: any) => ({
+            id: s.id,
+            parent_server_id: s.parent_server_id,
+            node_type: s.node_type,
+            status: s.status,
+            provision_percent: Number(s.provision_percent),
+            provision_time: s.provision_time,
+            error_type: s.error_type,
+            max_memory: s.max_memory,
+            max_cores: s.max_cores,
+            max_storage: s.max_storage,
+          });
 
-              const hosts = servers.filter((s: any) => s.node_type === 'HOST').length;
-              const vms = servers.filter((s: any) => s.node_type === 'VM').length;
+          // Fleet PRI without deviation penalty — it is the reference baseline
+          const fleetPRIScore = aggregatePRIMetrics(allServers.map(toInput), config).priScore;
 
-              return {
-                zone_id: zone.zone_id,
-                pri_score: Math.round(metrics.priScore * 100) / 100,
-                success_rate: Math.round(metrics.successRate * 100) / 100,
-                total_servers: metrics.totalServers,
-                hosts_count: hosts,
-                vms_count: vms,
-                failed_count: metrics.failedServers,
-                color: metrics.color,
-              };
-            })
-          );
+          const serversByZone = new Map<string, typeof allServers>();
+          for (const s of allServers) {
+            const list = serversByZone.get(s.zone_id) ?? [];
+            list.push(s);
+            serversByZone.set(s.zone_id, list);
+          }
+
+          const zonesWithPRI = allZones.map((zone: any) => {
+            const servers = serversByZone.get(zone.zone_id) ?? [];
+            const metrics = aggregatePRIMetrics(servers.map(toInput), config, fleetPRIScore);
+            const hosts = servers.filter((s: any) => s.node_type === 'HOST').length;
+            const vms = servers.filter((s: any) => s.node_type === 'VM').length;
+
+            return {
+              zone_id: zone.zone_id,
+              pri_score: Math.round(metrics.priScore * 100) / 100,
+              success_rate: Math.round(metrics.successRate * 100) / 100,
+              total_servers: metrics.totalServers,
+              hosts_count: hosts,
+              vms_count: vms,
+              failed_count: metrics.failedServers,
+              color: metrics.color,
+            };
+          });
 
           return NextResponse.json({
             success: true,

@@ -51,6 +51,9 @@ function toPRIInput(server: typeof compute_server2.$inferSelect): ComputeServerD
     provision_percent: Number(server.provision_percent),
     provision_time: Number(server.provision_time),
     error_type: server.error_type,
+    max_memory: server.max_memory,
+    max_cores: server.max_cores,
+    max_storage: server.max_storage,
   };
 }
 
@@ -158,9 +161,13 @@ export async function GET(request: Request) {
       serversByZone.set(server.zone_id, list);
     }
 
+    // Compute fleet PRI first (no deviation penalty — it is the reference baseline)
+    const allPRIMetrics = aggregatePRIMetrics(serverRows.map(toPRIInput), config);
+    const fleetPRIScore = allPRIMetrics.priScore;
+
     const zoneComparison: ZoneComparison[] = Array.from(zoneIds).map(zoneId => {
       const zoneServers = serversByZone.get(zoneId) ?? [];
-      const m = aggregatePRIMetrics(zoneServers.map(toPRIInput), config);
+      const m = aggregatePRIMetrics(zoneServers.map(toPRIInput), config, fleetPRIScore);
       return {
         zone_id: zoneId,
         pri_score: Number(m.priScore.toFixed(2)),
@@ -175,7 +182,6 @@ export async function GET(request: Request) {
     });
 
     const sortedByPri = [...zoneComparison].sort((a, b) => a.pri_score - b.pri_score);
-    const allPRIMetrics = aggregatePRIMetrics(serverRows.map(toPRIInput), config);
     const allErrorData = serverRows.map(toErrorInput);
     const errorDistribution = analyzeErrorDistribution(allErrorData);
     const { preProvisionErrors, postProvisionErrors } = separateErrorsByPhase(allErrorData);

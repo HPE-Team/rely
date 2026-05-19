@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -13,12 +14,12 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { getErrorTypeLabel } from "@/app/lib/constants/error-weights";
-import { formatZoneLabel } from "@/app/lib/utils";
+import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
 
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
 import { usePRIConfig } from "@/app/components/dashboard/weight-config";
 import { withConfig } from "@/app/lib/config/pri-config";
@@ -40,13 +41,20 @@ interface ZoneDetail {
     failed_servers: number;
     cascaded_failures: number;
     outlier_ratio: number;
-    outlier_upper_fence: number;
+    outlier_default_fence: number;
+    fleet_pri_score: number | null;
+    fleet_deviation_penalty: number;
     outlier_servers?: Array<{
       id: number;
       node_type: "HOST" | "VM";
       provision_time: number;
       status: string;
       error_type: string | null;
+      k?: number;
+      fence?: number;
+      max_memory?: number;
+      max_cores?: number;
+      max_storage?: number;
     }>;
     color: ZoneColor;
   };
@@ -252,7 +260,19 @@ export default function ZonePage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className={`font-sans text-4xl font-bold mb-2`}>
+            <h1 className="font-sans text-4xl font-bold mb-2 flex items-center gap-3">
+              {(() => {
+                const logo = getZoneLogo(zoneDetail.zone_id);
+                return logo ? (
+                  <Image
+                    src={logo}
+                    alt={formatZoneLabel(zoneDetail.zone_id)}
+                    width={36}
+                    height={36}
+                    className="rounded-lg object-contain shrink-0"
+                  />
+                ) : null;
+              })()}
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -355,40 +375,112 @@ export default function ZonePage() {
                     </p>
                     <p className="text-sm text-foreground">
                       {zoneDetail.overall.outlier_ratio.toFixed(1)}% of
-                      provisions exceeded{" "}
-                      <span className="font-mono font-semibold">
-                        {zoneDetail.overall.outlier_upper_fence?.toFixed(0)}s
-                      </span>{" "}
-                      (IQR upper fence)
+                      provisions exceeded their dynamic fence
+                      {zoneDetail.overall.outlier_default_fence != null && (
+                        <>
+                          {" "}(median fence{" "}
+                          <span className="font-mono font-semibold">
+                            {zoneDetail.overall.outlier_default_fence.toFixed(0)}s
+                          </span>
+                          )
+                        </>
+                      )}
                     </p>
                     {zoneDetail.overall.outlier_servers &&
                       zoneDetail.overall.outlier_servers.length > 0 && (
-                        <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                        <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                          {/* Column headers */}
+                          <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-x-2 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <span>Type</span>
+                            <span>ID</span>
+                            <span className="text-right">Time</span>
+                            <span className="text-right">k</span>
+                            <span className="text-right">Fence</span>
+                          </div>
                           {zoneDetail.overall.outlier_servers.map((s) => (
                             <div
                               key={s.id}
-                              className="flex items-center justify-between rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5"
+                              className="rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5 space-y-1"
                             >
-                              <div className="flex items-center gap-2 min-w-0">
+                              <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-x-2 items-center">
                                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
                                   {s.node_type}
                                 </span>
-                                <span className="font-mono text-xs truncate">
-                                  #{s.id}
-                                </span>
-                                {s.status === "failed" && (
-                                  <span className="text-[10px] text-red-400 font-semibold">
-                                    FAILED
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <span className="font-mono text-xs truncate">
+                                    #{s.id}
                                   </span>
-                                )}
+                                  {s.status === "failed" && (
+                                    <span className="text-[10px] text-red-400 font-semibold shrink-0">
+                                      FAILED
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="font-mono text-xs font-semibold text-yellow-300 text-right">
+                                  {s.provision_time.toFixed(1)}s
+                                </span>
+                                <span className="font-mono text-xs text-muted-foreground text-right">
+                                  {s.k != null ? s.k.toFixed(2) : "1.50"}
+                                </span>
+                                <span className="font-mono text-xs text-muted-foreground text-right">
+                                  {s.fence != null ? `${s.fence.toFixed(0)}s` : "—"}
+                                </span>
                               </div>
-                              <span className="font-mono text-xs font-semibold text-yellow-300 flex-shrink-0">
-                                {s.provision_time.toFixed(1)}s
-                              </span>
+                              {(s.max_memory != null || s.max_cores != null || s.max_storage != null) && (
+                                <div className="flex items-center gap-3 pt-0.5">
+                                  {s.max_memory != null && (
+                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                      {s.max_memory >= 1024 ? `${(s.max_memory / 1024).toFixed(0)}GB` : `${s.max_memory}MB`} RAM
+                                    </span>
+                                  )}
+                                  {s.max_cores != null && (
+                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                      {s.max_cores} vCPU
+                                    </span>
+                                  )}
+                                  {s.max_storage != null && (
+                                    <span className="text-[10px] text-muted-foreground font-mono">
+                                      {s.max_storage}GB disk
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       )}
+                  </div>
+                )}
+
+                {(zoneDetail.overall.fleet_deviation_penalty ?? 0) > 0 &&
+                  zoneDetail.overall.fleet_pri_score != null && (
+                  <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 space-y-2">
+                    <p className="text-xs font-medium text-blue-400">
+                      Fleet Deviation Penalty
+                    </p>
+                    <p className="text-sm text-foreground">
+                      Zone PRI is below the fleet baseline — a penalty was applied.
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">Fleet PRI</p>
+                        <p className="font-mono text-sm font-semibold">
+                          {zoneDetail.overall.fleet_pri_score.toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">Zone PRI</p>
+                        <p className="font-mono text-sm font-semibold">
+                          {zoneDetail.overall.pri_score.toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-0.5">Deducted</p>
+                        <p className="font-mono text-sm font-semibold text-red-400">
+                          −{zoneDetail.overall.fleet_deviation_penalty.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -432,7 +524,15 @@ export default function ZonePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card className="border-border/50 shadow-sm">
             <CardHeader className="pb-4 border-b border-border/30">
-              <CardTitle className="text-xl">ESX (Hosts) Metrics</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-xl">ESX (Hosts) Metrics</CardTitle>
+                <Link href={`/zone/${zoneId}/hosts`}>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1 shrink-0">
+                    View Hosts
+                    <ArrowRight className="w-3 h-3" />
+                  </Button>
+                </Link>
+              </div>
               <CardDescription className="text-muted-foreground">
                 Physical infrastructure reliability
               </CardDescription>

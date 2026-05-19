@@ -9,7 +9,8 @@ import {
   getErrorTypeLabel,
   type ErrorType,
 } from "@/app/lib/constants/error-weights";
-import { formatZoneLabel } from "@/app/lib/utils";
+import Image from "next/image";
+import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
 import {
   Card,
   CardContent,
@@ -382,11 +383,22 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">
                     Highest Risk Zone
                   </p>
-                  <p className="text-2xl font-semibold mt-1">
-                    {aggregate.overview.highest_risk_zone
-                      ? formatZoneLabel(aggregate.overview.highest_risk_zone)
-                      : "N/A"}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {aggregate.overview.highest_risk_zone && getZoneLogo(aggregate.overview.highest_risk_zone) && (
+                      <Image
+                        src={getZoneLogo(aggregate.overview.highest_risk_zone)!}
+                        alt={formatZoneLabel(aggregate.overview.highest_risk_zone)}
+                        width={24}
+                        height={24}
+                        className="rounded object-contain shrink-0"
+                      />
+                    )}
+                    <p className="font-sans text-2xl font-semibold">
+                      {aggregate.overview.highest_risk_zone
+                        ? formatZoneLabel(aggregate.overview.highest_risk_zone)
+                        : "N/A"}
+                    </p>
+                  </div>
                 </div>
                 <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
                   <p className="text-sm text-muted-foreground">

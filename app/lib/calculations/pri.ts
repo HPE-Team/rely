@@ -10,13 +10,20 @@ export interface ColorThresholds {
 
 export interface PRIConfig {
   errorWeights: Record<ErrorType, number>;
-  iqrMultiplier: number;
+  /** Per-resource impact on the Tukey fence multiplier k. Range [0, 1] each.
+   *  k_i = clamp(1.5 + α_mem·(mem_i/med_mem − 1) + α_cpu·(cores_i/med_cores − 1) + α_stor·(stor_i/med_stor − 1), 0.5, 4)
+   *  Higher alpha → bigger VMs get more slack; smaller VMs get tighter fences. */
+  outlierResourceImpact: { memory: number; cores: number; storage: number };
+  /** Weight applied to the fleet-deviation penalty: points = max(0, fleetPRI − zonePRI) × impact.
+   *  Range [0, 0.2]. Post-hoc deduction after all other breakdown components. */
+  fleetDeviationImpact: number;
   colorThresholds: ColorThresholds;
 }
 
 export const DEFAULT_PRI_CONFIG: PRIConfig = {
   errorWeights: DEFAULT_ERROR_WEIGHTS,
-  iqrMultiplier: 1.5,
+  outlierResourceImpact: { memory: 0.3, cores: 0.3, storage: 0.2 },
+  fleetDeviationImpact: 0.05,
   colorThresholds: {
     pri: { green: 85, amber: 70 },
     criticalRatio: { amber: 0.3, red: 0.6 },
@@ -46,11 +53,23 @@ export interface PRIBreakdown {
   stabilityLoss: number;
   errorLoss: number;
   outlierLoss: number;
+  /** Points deducted because this zone's PRI is below the fleet baseline. 0 when no fleet context. */
+  fleetDeviationLoss: number;
   total: number; // base + all losses (clamped to [0, 100])
   contributions: PRIContribution[]; // ordered by loss magnitude, descending
 }
 
 // ── Result types ──────────────────────────────────────────────────────────────
+
+/** Per-server Tukey fence metadata — returned alongside outlier results. */
+export interface OutlierServerFence {
+  id: number;
+  k: number;
+  fence: number;
+  max_memory: number;
+  max_cores: number;
+  max_storage: number;
+}
 
 export interface PRICalculationMetrics {
   totalServers: number;
@@ -64,10 +83,15 @@ export interface PRICalculationMetrics {
   errorPenalty: number;
   outlierPenalty: number;
   outlierRatio: number;
-  outlierUpperFence: number;
+  /** Reference fence using the fixed k=1.5 baseline — used for display labels. */
+  outlierDefaultFence: number;
+  /** Per-server dynamic fence data (k_i, fence_i, resources). */
+  outlierPerServerFences: OutlierServerFence[];
   cascadedFailures: number;
   criticalRatio: number;
   esxFailShare: number;
+  /** Points deducted due to fleet-deviation penalty. 0 when no fleet context provided. */
+  fleetDeviationLoss: number;
   color: ZoneColor;
   priScore: number;
   breakdown: PRIBreakdown;
@@ -81,6 +105,9 @@ export interface ComputeServerData {
   provision_percent: number;
   provision_time: number;
   error_type: string | null;
+  max_memory?: number | null;
+  max_cores?: number | null;
+  max_storage?: number | null;
 }
 
 // ── Math helpers ──────────────────────────────────────────────────────────────
@@ -107,6 +134,12 @@ function quartiles(nums: number[]): { q1: number; q3: number; iqr: number } {
   return { q1, q3, iqr: q3 - q1 };
 }
 
+/** Computes the median of an array of positive numbers, ignoring zeros and nulls. */
+function positiveMedian(values: Array<number | null | undefined>): number {
+  const valid = values.filter((v): v is number => typeof v === 'number' && v > 0);
+  return calculateMedian(valid);
+}
+
 // ── Component score functions ─────────────────────────────────────────────────
 
 /**
@@ -118,6 +151,7 @@ export function calculatePRIBreakdown(
   stabilityScore: number,
   errorPenalty: number,
   outlierPenalty: number,
+  fleetDeviationLoss: number = 0,
 ): PRIBreakdown {
   const w = PRI_WEIGHTS;
   const successLoss = (100 - successRate) * w.successRate;
@@ -127,7 +161,7 @@ export function calculatePRIBreakdown(
 
   const total = Math.max(
     0,
-    Math.min(100, 100 - successLoss - stabilityLoss - errorLoss - outlierLoss),
+    Math.min(100, 100 - successLoss - stabilityLoss - errorLoss - outlierLoss - fleetDeviationLoss),
   );
 
   const contributions: PRIContribution[] = [
@@ -135,9 +169,12 @@ export function calculatePRIBreakdown(
     { label: 'Stability', points: -stabilityLoss },
     { label: 'Error severity', points: -errorLoss },
     { label: 'Provision time outliers', points: -outlierLoss },
-  ].sort((a, b) => a.points - b.points);
+    { label: 'Fleet deviation', points: -fleetDeviationLoss },
+  ]
+    .filter(c => c.label !== 'Fleet deviation' || fleetDeviationLoss > 0)
+    .sort((a, b) => a.points - b.points);
 
-  return { base: 100, successLoss, stabilityLoss, errorLoss, outlierLoss, total, contributions };
+  return { base: 100, successLoss, stabilityLoss, errorLoss, outlierLoss, fleetDeviationLoss, total, contributions };
 }
 
 export function calculatePRIScore(
@@ -180,24 +217,79 @@ export function calculateErrorPenalty(
   return Math.min(100, (weightedCount / totalServers) * 100);
 }
 
+/**
+ * Computes dynamic per-server Tukey fences where each server's fence multiplier k_i
+ * scales with its resource requirements relative to the fleet median.
+ *
+ * k_i = clamp(1.5 + α_mem·(mem_i/med_mem − 1) + α_cpu·(cores_i/med_cores − 1) + α_stor·(stor_i/med_stor − 1), 0.5, 4)
+ *
+ * Servers with missing/zero resources get zero contribution from that dimension (k_i → 1.5 base).
+ * Returns per-server fence data alongside aggregate outlier stats.
+ */
 export function calculateOutlierResult(
-  provisionTimes: number[],
-  iqrMultiplier: number = 1.5,
-): { ratio: number; upperFence: number; penalty: number } {
-  if (provisionTimes.length < 4) {
-    return { ratio: 0, upperFence: Infinity, penalty: 0 };
+  servers: Array<Pick<ComputeServerData, 'id' | 'provision_time' | 'max_memory' | 'max_cores' | 'max_storage'>>,
+  outlierResourceImpact: { memory: number; cores: number; storage: number } = DEFAULT_PRI_CONFIG.outlierResourceImpact,
+): { ratio: number; defaultFence: number; penalty: number; perServerFences: OutlierServerFence[] } {
+  if (servers.length < 4) {
+    return { ratio: 0, defaultFence: Infinity, penalty: 0, perServerFences: [] };
   }
 
-  const { q3, iqr } = quartiles(provisionTimes);
-  const upperFence = q3 + iqrMultiplier * iqr;
+  const times = servers.map(s => s.provision_time);
+  const { q3, iqr } = quartiles(times);
+
+  const defaultFence = q3 + 1.5 * iqr;
 
   if (iqr === 0) {
-    return { ratio: 0, upperFence, penalty: 0 };
+    const perServerFences = servers.map(s => ({
+      id: s.id,
+      k: 1.5,
+      fence: defaultFence,
+      max_memory: s.max_memory ?? 0,
+      max_cores: s.max_cores ?? 0,
+      max_storage: s.max_storage ?? 0,
+    }));
+    return { ratio: 0, defaultFence, penalty: 0, perServerFences };
   }
 
-  const outlierCount = provisionTimes.filter(t => t > upperFence).length;
-  const ratio = outlierCount / provisionTimes.length;
-  return { ratio, upperFence, penalty: ratio * 100 };
+  const medMemory = positiveMedian(servers.map(s => s.max_memory));
+  const medCores = positiveMedian(servers.map(s => s.max_cores));
+  const medStorage = positiveMedian(servers.map(s => s.max_storage));
+
+  const BASE_K = 1.5;
+
+  const perServerFences: OutlierServerFence[] = servers.map(s => {
+    const mem = s.max_memory ?? 0;
+    const cores = s.max_cores ?? 0;
+    const storage = s.max_storage ?? 0;
+
+    // ratio = (resource / median) - 1; 0 contribution when median is 0 (all missing data)
+    const rMem = medMemory > 0 ? (mem / medMemory) - 1 : 0;
+    const rCores = medCores > 0 ? (cores / medCores) - 1 : 0;
+    const rStorage = medStorage > 0 ? (storage / medStorage) - 1 : 0;
+
+    const k = Math.max(0.5, Math.min(4,
+      BASE_K
+      + outlierResourceImpact.memory * rMem
+      + outlierResourceImpact.cores * rCores
+      + outlierResourceImpact.storage * rStorage
+    ));
+
+    return {
+      id: s.id,
+      k,
+      fence: q3 + k * iqr,
+      max_memory: mem,
+      max_cores: cores,
+      max_storage: storage,
+    };
+  });
+
+  const outlierCount = perServerFences.filter(
+    (sf, i) => servers[i].provision_time > sf.fence
+  ).length;
+  const ratio = outlierCount / servers.length;
+
+  return { ratio, defaultFence, penalty: ratio * 100, perServerFences };
 }
 
 export function calculateDependencyPenalty(
@@ -239,14 +331,22 @@ export function calculateColor(
 
 // ── Aggregate ─────────────────────────────────────────────────────────────────
 
+/**
+ * @param servers         Servers to score.
+ * @param config          PRI configuration overrides.
+ * @param fleetPRIScore   Fleet-wide PRI (no deviation penalty applied). When provided,
+ *                        zones below the fleet baseline incur a fleet-deviation deduction.
+ */
 export function aggregatePRIMetrics(
   servers: ComputeServerData[],
   config?: Partial<PRIConfig>,
+  fleetPRIScore?: number,
 ): PRICalculationMetrics {
   const cfg: PRIConfig = {
     ...DEFAULT_PRI_CONFIG,
     ...config,
     errorWeights: { ...DEFAULT_PRI_CONFIG.errorWeights, ...config?.errorWeights },
+    outlierResourceImpact: { ...DEFAULT_PRI_CONFIG.outlierResourceImpact, ...config?.outlierResourceImpact },
     colorThresholds: {
       ...DEFAULT_PRI_CONFIG.colorThresholds,
       ...config?.colorThresholds,
@@ -268,10 +368,12 @@ export function aggregatePRIMetrics(
     errorPenalty: 0,
     outlierPenalty: 0,
     outlierRatio: 0,
-    outlierUpperFence: 0,
+    outlierDefaultFence: 0,
+    outlierPerServerFences: [],
     cascadedFailures: 0,
     criticalRatio: 0,
     esxFailShare: 0,
+    fleetDeviationLoss: 0,
     color: 'green',
     priScore: 0,
     breakdown: {
@@ -280,6 +382,7 @@ export function aggregatePRIMetrics(
       stabilityLoss: 0,
       errorLoss: 0,
       outlierLoss: 0,
+      fleetDeviationLoss: 0,
       total: 0,
       contributions: [],
     },
@@ -330,14 +433,20 @@ export function aggregatePRIMetrics(
 
   const errorPenalty = calculateErrorPenalty(errorCounts, totalServers, cfg.errorWeights);
 
-  const outlier = calculateOutlierResult(allTimes, cfg.iqrMultiplier);
+  const outlier = calculateOutlierResult(effectiveServers, cfg.outlierResourceImpact);
 
-  const breakdown = calculatePRIBreakdown(
-    successRate,
-    stabilityScore,
-    errorPenalty,
-    outlier.penalty,
-  );
+  // Fleet-deviation penalty: only applied when zone PRI is below fleet baseline
+  const rawPRIBreakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty);
+  const rawPRI = rawPRIBreakdown.total;
+
+  const fleetDeviationLoss = fleetPRIScore !== undefined
+    ? Math.max(0, fleetPRIScore - rawPRI) * cfg.fleetDeviationImpact
+    : 0;
+
+  const breakdown = fleetDeviationLoss > 0
+    ? calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, fleetDeviationLoss)
+    : rawPRIBreakdown;
+
   const priScore = breakdown.total;
 
   // Color inputs
@@ -367,10 +476,12 @@ export function aggregatePRIMetrics(
     errorPenalty,
     outlierPenalty: outlier.penalty,
     outlierRatio: outlier.ratio,
-    outlierUpperFence: outlier.upperFence,
+    outlierDefaultFence: outlier.defaultFence,
+    outlierPerServerFences: outlier.perServerFences,
     cascadedFailures,
     criticalRatio,
     esxFailShare,
+    fleetDeviationLoss,
     color,
     priScore,
     breakdown,

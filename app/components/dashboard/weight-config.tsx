@@ -14,7 +14,7 @@ import { Button } from "@/app/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { sileo } from "sileo";
 
-type Section = ErrorPhase | "outliers" | "color";
+type Section = ErrorPhase | "outliers" | "fleet-deviation" | "color";
 
 interface WeightConfigProps {
   onClose?: () => void;
@@ -26,6 +26,7 @@ function deepMerge(defaults: PRIConfig, partial: Partial<PRIConfig>): PRIConfig 
     ...defaults,
     ...partial,
     errorWeights: { ...defaults.errorWeights, ...partial.errorWeights },
+    outlierResourceImpact: { ...defaults.outlierResourceImpact, ...partial.outlierResourceImpact },
     colorThresholds: {
       ...defaults.colorThresholds,
       ...partial.colorThresholds,
@@ -170,29 +171,93 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
           <button type="button" className={headerClass} onClick={() => toggle("outliers")}>
             <div>
               <p className="font-mono text-sm font-semibold">Outliers</p>
-              <p className="text-xs text-muted-foreground">Provision time outlier sensitivity (vs median)</p>
+              <p className="text-xs text-muted-foreground">Resource-based dynamic Tukey fence tolerance (k = 1.5 base ± resource impact)</p>
             </div>
             {chevron("outliers")}
           </button>
           <div className={collapse("outliers")}>
             <div className="overflow-hidden">
+              <div className="space-y-5 lg:space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
+                <p className="text-xs text-muted-foreground">
+                  Each slider controls how much a resource dimension shifts the per-VM fence multiplier k away from the 1.5 base.
+                  Higher impact → VMs requesting more than median get more slack; VMs requesting less get a stricter fence.
+                </p>
+
+                {(
+                  [
+                    { key: "memory", label: "Memory impact", description: "k shifts up/down based on VM max_memory vs fleet median memory" },
+                    { key: "cores",  label: "CPU cores impact", description: "k shifts up/down based on VM max_cores vs fleet median cores" },
+                    { key: "storage", label: "Storage impact", description: "k shifts up/down based on VM max_storage vs fleet median storage" },
+                  ] as const
+                ).map(({ key, label, description }) => (
+                  <div
+                    key={key}
+                    className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center"
+                  >
+                    <div className="flex items-start justify-between gap-4 lg:justify-start">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm">{label}</p>
+                        <p className="text-xs text-muted-foreground">{description}</p>
+                      </div>
+                      <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
+                        {config.outlierResourceImpact[key].toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Slider
+                        value={[config.outlierResourceImpact[key]]}
+                        onValueChange={v => setConfig(c => ({
+                          ...c,
+                          outlierResourceImpact: { ...c.outlierResourceImpact, [key]: v[0] },
+                        }))}
+                        min={0} max={1} step={0.05}
+                        className="flex-1"
+                      />
+                      <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
+                        {config.outlierResourceImpact[key].toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fleet Deviation */}
+        <div className={sectionClass("fleet-deviation")}>
+          <button type="button" className={headerClass} onClick={() => toggle("fleet-deviation")}>
+            <div>
+              <p className="font-mono text-sm font-semibold">Fleet Deviation</p>
+              <p className="text-xs text-muted-foreground">Penalize zones that fall below the fleet-wide PRI baseline</p>
+            </div>
+            {chevron("fleet-deviation")}
+          </button>
+          <div className={collapse("fleet-deviation")}>
+            <div className="overflow-hidden">
               <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
                 <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
                   <div className="flex items-start justify-between gap-4 lg:justify-start">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">IQR Outlier Multiplier</p>
-                      <p className="text-xs text-muted-foreground">Fence = Q3 + k × IQR. Lower = stricter outlier detection</p>
+                      <p className="font-medium text-sm">Deviation impact</p>
+                      <p className="text-xs text-muted-foreground">
+                        Penalty = max(0, fleetPRI − zonePRI) × impact. Only zones below the fleet baseline are penalized. Set to 0 to disable.
+                      </p>
                     </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.iqrMultiplier.toFixed(1)}x</p>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
+                      {config.fleetDeviationImpact.toFixed(2)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Slider
-                      value={[config.iqrMultiplier]}
-                      onValueChange={v => setConfig(c => ({ ...c, iqrMultiplier: v[0] }))}
-                      min={0.5} max={4} step={0.1}
+                      value={[config.fleetDeviationImpact]}
+                      onValueChange={v => setConfig(c => ({ ...c, fleetDeviationImpact: v[0] }))}
+                      min={0} max={0.2} step={0.01}
                       className="flex-1"
                     />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.iqrMultiplier.toFixed(1)}x</p>
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
+                      {config.fleetDeviationImpact.toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </div>

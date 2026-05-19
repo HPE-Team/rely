@@ -227,7 +227,9 @@ export default function Dashboard() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Most reliable:{" "}
-                  {aggregate.overview.most_reliable_zone ?? "N/A"}
+                  {aggregate.overview.most_reliable_zone
+                    ? formatZoneLabel(aggregate.overview.most_reliable_zone)
+                    : "N/A"}
                 </p>
               </CardContent>
             </Card>

@@ -12,6 +12,7 @@ const mockBreakdown = (score: number): PRIBreakdown => ({
   stabilityLoss: (100 - score) * 0.4,
   errorLoss: (100 - score) * 0.15,
   outlierLoss: (100 - score) * 0.05,
+  crLoss: 0,
   fleetDeviationLoss: 0,
   total: score,
   contributions: [
@@ -19,6 +20,8 @@ const mockBreakdown = (score: number): PRIBreakdown => ({
     { label: 'Stability', points: -(100 - score) * 0.4 },
     { label: 'Error severity', points: -(100 - score) * 0.15 },
     { label: 'Provision time outliers', points: -(100 - score) * 0.05 },
+    { label: 'Capacity reliability', points: 0 },
+    { label: 'Fleet deviation', points: 0 },
   ],
 });
 

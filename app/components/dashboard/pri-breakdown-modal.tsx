@@ -32,6 +32,8 @@ const CAUSE: Record<string, string> = {
     "Weighted 10%. Sum of (error count × per-type weight) ÷ total servers. Critical types (HARDWARE / STORAGE / POWER / HOST_FAILURE) cost the most.",
   "Provision time outliers":
     "Weighted 5%. Share of provisions exceeding their per-VM dynamic fence. Each VM's fence = Q3 + k_i × IQR, where k_i (base 1.5) scales with the VM's resource requirements vs fleet median. Adjust resource impact weights in Settings.",
+  "Capacity reliability":
+    "Penalizes overcommitted hosts using 1/(1+u²) decay per resource (CPU 40%, Memory 40%, Storage 20%), where u = allocated/physical capacity. Aggregated across hosts by VM count. Score 1.0 = empty hosts, 0.5 = fully committed, 0.2 = 2× overcommit. Adjust weight in Settings → Capacity Reliability.",
   "Fleet deviation":
     "Post-hoc penalty applied when this zone's PRI falls below the fleet-wide baseline. Penalty = max(0, fleetPRI − zonePRI) × impact weight. Adjust impact in Settings → Fleet Deviation.",
 };

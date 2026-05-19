@@ -73,13 +73,14 @@ rawPRI = 100
        − (100 − stabilityScore)   × 0.20   // stabilityLoss
        − errorPenalty             × 0.10   // errorLoss
        − outlierPenalty           × 0.05   // outlierLoss
+       − (1 − CR)                 × crWeight × 100  // crLoss
 
 // clamp to [0, 100]
 
 PRI = clamp(rawPRI − fleetDeviationLoss, 0, 100)
 ```
 
-The four component weights (`0.80 + 0.20 + 0.10 + 0.05`) describe the pool on its own. The fleet deviation term (§5.5) is a **post-hoc deduction** applied after clamping. It is separate and does not change the weight ratios — a perfect pool still lands exactly on 100 (it has no deviation to penalize).
+The four fixed-weight terms describe provisioning outcomes. CR (§5.6) adds a capacity dimension using a configurable weight. Fleet deviation (§5.5) is a **post-hoc deduction** applied after clamping. A perfect pool with empty hosts still lands on 100 — no outliers, no failures, no deviation, CR=1 → crLoss=0.
 
 Why each weight:
 
@@ -89,6 +90,7 @@ Why each weight:
 | Stability | **0.20** | Variance matters, but a consistent 100%-success pool with varying provision times shouldnt tank the score by itself. Still something to look at :) |
 | Error severity | **0.10** | Amplifies failures that indicate worse underlying state depending on criticality of error (pre set in code rn). |
 | Outliers | **0.05** | Cut points for long-tail provisions. Real signal, rare. E.g. a deployment taking 5 mins when the median is 2 mins. |
+| Capacity reliability | **configurable** | Predictive capacity risk. See §5.6. Default 0.15. |
 | Fleet deviation | **configurable** | Post-hoc. See §5.5. |
 
 Weights are a **configurable choice**, not a derived number. They're exposed so they can be tuned easily on the dashboard depending on the priority.
@@ -224,6 +226,62 @@ Key properties:
 
 The loss is intentionally small by default — it nudges the ranking without masking the absolute score. Raise `fleetDeviationImpact` if you want zone-vs-fleet comparisons to carry more weight.
 
+### 5.6 crLoss - Capacity Reliability
+
+The four terms above measure provisioning *outcomes*. Capacity Reliability (CR) adds a predictive dimension: a zone with perfect past provisioning but hosts at 90% utilization is genuinely riskier than one at 40%. CR captures this before it becomes a failure.
+
+**Step 1 — compute utilization per host** (across all hosts with child VMs):
+
+```ts
+u_cpu  = Σ(vm.max_cores)   / host.max_cores
+u_mem  = Σ(vm.max_memory)  / host.max_memory
+u_stor = Σ(vm.max_storage) / host.max_storage
+```
+
+u can exceed 1.0 in environments using hypervisor overcommit (e.g., 128 vCPUs on a 64-core machine). Zero-valued host fields contribute u=0.
+
+**Step 2 — nonlinear decay per resource**:
+
+```ts
+score_resource = 1 / (1 + u²)
+```
+
+| u | score | meaning |
+|---|---|---|
+| 0.0 | 1.00 | host empty |
+| 0.5 | 0.80 | 50% utilized |
+| 1.0 | 0.50 | fully committed |
+| 1.5 | 0.31 | 50% overcommit |
+| 2.0 | 0.20 | 200% overcommit |
+
+Linear percentage (80% full = 0.8 score) underestimates OOM risk at high utilization. The quadratic denominator correctly models the nonlinear spike in risk at saturation.
+
+**Step 3 — per-host CR**:
+
+```ts
+CR_host = 0.4 × score_cpu + 0.4 × score_mem + 0.2 × score_stor
+```
+
+CPU and Memory weighted equally at 40% each — they cause immediate kernel panics or CPU steal. Storage at 20% because modern hypervisors often use decoupled SANs.
+
+**Step 4 — VM-count-weighted zone aggregate**:
+
+```ts
+CR = Σ(CR_host × vmCount_host) / Σ(vmCount_host)
+```
+
+Weighted by VM count so heavily-loaded hosts with more VMs carry more influence than nearly-empty hosts.
+
+**Step 5 — loss**:
+
+```ts
+crLoss = (1 − CR) × crWeight × 100
+```
+
+`crWeight` (default `0.15`, range `[0, 0.25]`) is configurable in Settings → Capacity Reliability. Set to 0 to disable.
+
+**Scope**: CR is computed from all HOST nodes and their child VMs via `parent_server_id`. When called on a VM-only or host-only (no VMs) pool, CR=1 and crLoss=0.
+
 ---
 
 ## 6. Stability vs outliers - why both
@@ -334,6 +392,9 @@ type PRIConfig = {
     cores:   number;   // α_cpu  — default 0.3
     storage: number;   // α_stor — default 0.2
   };
+
+  // Capacity Reliability weight — see §5.6
+  crWeight: number;                                // default 0.15, range [0, 0.25]
 
   // Fleet deviation post-hoc penalty
   fleetDeviationImpact: number;                    // default 0.05, range [0, 0.2]

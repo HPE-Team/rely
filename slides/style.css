@@ -1,0 +1,353 @@
+/* ─── Rely Design System — 1280×720 ──────────────────────────────────── */
+
+:root {
+  --rely-bg:          #1c1c1c;
+  --rely-card:        #282828;
+  --rely-muted-bg:    #2e2e2e;
+  --rely-fg:          #f9f9f9;
+  --rely-muted:       #a8a8a8;
+  --rely-border:      rgba(255, 255, 255, 0.09);
+  --rely-accent:      #4060D0;
+  --rely-accent-dim:  rgba(64, 96, 208, 0.15);
+  --rely-chart-light: #d4d4d4;
+  --rely-chart-mid:   #808080;
+  --rely-chart-dark:  #5e5e5e;
+  --rely-destructive: #FF6040;
+  --rely-radius:      8px;
+  --slidev-theme-primary:   #4060D0;
+  --slidev-code-background: #282828;
+}
+
+/* ─── Slide shell ─────────────────────────────────────────────────────── */
+
+.slidev-layout {
+  position:    relative;
+  background:  var(--rely-bg);
+  color:       var(--rely-fg);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size:   15px;
+  width:       1280px;
+  height:      720px;
+  box-sizing:  border-box;
+  overflow:    hidden;
+  padding:     44px 60px 58px; /* extra bottom clears the 30px TOC bar */
+}
+
+/* accent top bar */
+.slidev-layout:first-child::before { display: none; }
+
+.slidev-layout::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  left:       0;
+  right:      0;
+  height:     3px;
+  background: linear-gradient(90deg, var(--rely-accent) 0%, transparent 100%);
+}
+
+/* ─── Typography ──────────────────────────────────────────────────────── */
+
+h1 {
+  font-family:    'Space Grotesk', sans-serif;
+  font-size:      30px;
+  font-weight:    700;
+  color:          var(--rely-accent);
+  line-height:    1.15;
+  margin:         0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size:   18px;
+  font-weight: 600;
+  color:       #ffffff;
+  margin:      0 0 10px;
+}
+
+h3 {
+  font-size:  14px;
+  font-weight: 600;
+  color:      var(--rely-chart-light);
+  margin:     0 0 6px;
+}
+
+p {
+  font-size:   14px;
+  line-height: 1.65;
+  color:       var(--rely-fg);
+  margin:      0 0 10px;
+}
+
+p:last-child { margin-bottom: 0; }
+
+strong { color: #ffffff; font-weight: 600; }
+em     { color: var(--rely-chart-light); font-style: italic; }
+a      { color: var(--rely-accent); text-decoration: none; }
+
+/* ─── Lists ───────────────────────────────────────────────────────────── */
+
+ul, ol {
+  padding-left: 18px;
+  font-size:    14px;
+  line-height:  1.65;
+  margin:       0 0 10px;
+}
+
+li { margin-bottom: 4px; }
+li:last-child { margin-bottom: 0; }
+ul > li::marker { color: var(--rely-accent); }
+ol > li::marker { color: var(--rely-accent); font-weight: 600; }
+
+/* ─── Inline code ─────────────────────────────────────────────────────── */
+
+code {
+  font-family:   'Geist Mono', monospace;
+  background:    var(--rely-card);
+  border:        1px solid var(--rely-border);
+  border-radius: 4px;
+  padding:       1px 5px;
+  font-size:     12px;
+  color:         var(--rely-chart-light);
+}
+
+/* ─── Code blocks ─────────────────────────────────────────────────────── */
+
+.slidev-code,
+div[class*="language-"],
+pre {
+  background:    var(--rely-card) !important;
+  border:        1px solid var(--rely-border) !important;
+  border-left:   3px solid var(--rely-accent) !important;
+  border-radius: var(--rely-radius) !important;
+  padding:       10px 14px !important;
+  font-size:     12px !important;
+  line-height:   1.5 !important;
+  margin:        0 0 10px !important;
+  overflow:      hidden !important;
+}
+
+pre code {
+  background:  transparent !important;
+  border:      none !important;
+  padding:     0 !important;
+  font-family: 'Geist Mono', monospace !important;
+  font-size:   inherit !important;
+  color:       var(--rely-chart-light) !important;
+}
+
+/* ─── Blockquote ──────────────────────────────────────────────────────── */
+
+blockquote {
+  border-left:   3px solid var(--rely-accent);
+  background:    var(--rely-card);
+  border-radius: 0 var(--rely-radius) var(--rely-radius) 0;
+  padding:       10px 14px;
+  margin:        0 0 10px;
+  color:         var(--rely-chart-light);
+  font-style:    italic;
+  font-size:     13px;
+}
+
+blockquote p { font-size: inherit; color: inherit; margin: 0; }
+
+/* ─── Formula table override — no card styling ────────────────────────── */
+
+table.formula-table,
+table.formula-table th,
+table.formula-table td {
+  background:     transparent !important;
+  border:         none !important;
+  border-radius:  0 !important;
+  padding:        0 !important;
+  font-size:      inherit !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color:          inherit !important;
+}
+
+/* ─── Tables ──────────────────────────────────────────────────────────── */
+
+table {
+  width:           100%;
+  border-collapse: separate;
+  border-spacing:  0;
+  border:          1px solid var(--rely-border);
+  border-radius:   var(--rely-radius);
+  overflow:        hidden;
+  background:      var(--rely-card);
+  font-size:       12.5px;
+  margin:          0 0 10px;
+}
+
+th {
+  background:     var(--rely-muted-bg);
+  color:          var(--rely-accent);
+  font-weight:    700;
+  padding:        7px 10px;
+  text-align:     left;
+  border-bottom:  2px solid var(--rely-accent);
+  font-size:      10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+td {
+  padding:       5px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  color:         var(--rely-chart-light);
+}
+
+tr:last-child td { border-bottom: none; }
+
+/* ─── HR ──────────────────────────────────────────────────────────────── */
+
+hr { border: none; border-top: 1px solid var(--rely-border); margin: 10px 0; }
+
+/* ─── Insight / callout box ───────────────────────────────────────────── */
+
+.insight {
+  background:    var(--rely-accent-dim);
+  border:        1px solid rgba(64, 96, 208, 0.35);
+  border-left:   3px solid var(--rely-accent);
+  border-radius: var(--rely-radius);
+  padding:       10px 14px;
+  font-size:     13px;
+  color:         var(--rely-chart-light);
+  margin-top:    auto;
+}
+
+.insight strong { color: var(--rely-accent); }
+
+/* ─── Stat chip ───────────────────────────────────────────────────────── */
+
+.stat-row {
+  display: flex;
+  gap: 16px;
+  margin-top: auto;
+}
+
+.stat {
+  flex:          1;
+  background:    var(--rely-card);
+  border:        1px solid var(--rely-border);
+  border-top:    2px solid var(--rely-accent);
+  border-radius: var(--rely-radius);
+  padding:       10px 14px;
+  text-align:    center;
+}
+
+.stat .val {
+  font-size:   22px;
+  font-weight: 700;
+  color:       #ffffff;
+  font-family: 'Geist Mono', monospace;
+  line-height: 1;
+}
+
+.stat .lbl {
+  font-size:  11px;
+  color:      var(--rely-muted);
+  margin-top: 4px;
+}
+
+/* ─── Layout: default (flex col so insight can sit at bottom) ─────────── */
+
+.slidev-layout.default {
+  display:        flex;
+  flex-direction: column;
+}
+
+/* ─── Layout: cover ───────────────────────────────────────────────────── */
+
+.slidev-layout.cover {
+  display:         flex;
+  flex-direction:  column;
+  justify-content: center;
+  align-items:     center;
+  padding:         0;
+}
+
+
+/* ─── Layout: center ──────────────────────────────────────────────────── */
+
+.slidev-layout.center {
+  display:         flex;
+  flex-direction:  column;
+  justify-content: center;
+  align-items:     center;
+  text-align:      center;
+  padding:         44px 100px 58px;
+}
+
+
+/* ─── Layout: two-columns (Slidev v52 class) ──────────────────────────── */
+
+.slidev-layout.two-columns {
+  padding: 0 !important;
+}
+
+.slidev-layout.two-columns::before {
+  content:    '';
+  position:   absolute;
+  top:        0;
+  left:       0;
+  right:      0;
+  height:     3px;
+  background: linear-gradient(90deg, var(--rely-accent) 0%, transparent 100%);
+}
+
+.col-left {
+  padding:        44px 36px 58px 60px;
+  border-right:   1px solid var(--rely-border);
+  overflow:       hidden;
+  display:        flex;
+  flex-direction: column;
+  height:         720px;
+  box-sizing:     border-box;
+}
+
+.col-right {
+  padding:        44px 60px 58px 36px;
+  overflow:       hidden;
+  display:        flex;
+  flex-direction: column;
+  height:         720px;
+  box-sizing:     border-box;
+}
+
+/* ─── Slide number ────────────────────────────────────────────────────── */
+
+.slidev-page-ref {
+  color:       var(--rely-chart-dark);
+  font-size:   11px;
+  font-family: 'Geist Mono', monospace;
+}
+
+/* ─── Progress bar ────────────────────────────────────────────────────── */
+
+.slidev-progress { background: var(--rely-accent) !important; }
+
+/* ─── Selection ───────────────────────────────────────────────────────── */
+
+::selection { background: rgba(64, 96, 208, 0.25); }
+
+/* ─── Section tag (above h1, identifies slide context) ───────────────── */
+
+.section-tag {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            5px;
+  background:     rgba(64, 96, 208, 0.10);
+  border:         1px solid rgba(64, 96, 208, 0.22);
+  color:          #4060D0;
+  font-size:      10px;
+  font-weight:    700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding:        2px 9px;
+  border-radius:  4px;
+  margin-bottom:  10px;
+  font-family:    'Geist Mono', monospace;
+  line-height:    1.6;
+}

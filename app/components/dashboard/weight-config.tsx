@@ -14,7 +14,7 @@ import { Button } from "@/app/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { sileo } from "sileo";
 
-type Section = ErrorPhase | "outliers" | "fleet-deviation" | "color";
+type Section = ErrorPhase | "outliers" | "capacity-reliability" | "fleet-deviation" | "color";
 
 interface WeightConfigProps {
   onClose?: () => void;
@@ -219,6 +219,47 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Capacity Reliability */}
+        <div className={sectionClass("capacity-reliability")}>
+          <button type="button" className={headerClass} onClick={() => toggle("capacity-reliability")}>
+            <div>
+              <p className="font-mono text-sm font-semibold">Capacity Reliability</p>
+              <p className="text-xs text-muted-foreground">Penalize zones with overcommitted hosts via nonlinear utilization decay</p>
+            </div>
+            {chevron("capacity-reliability")}
+          </button>
+          <div className={collapse("capacity-reliability")}>
+            <div className="overflow-hidden">
+              <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-start justify-between gap-4 lg:justify-start">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm">CR weight</p>
+                      <p className="text-xs text-muted-foreground">
+                        Loss = (1 − CR) × weight × 100. CR uses 1/(1+u²) decay per resource (CPU 40%, Mem 40%, Stor 20%). Set to 0 to disable.
+                      </p>
+                    </div>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
+                      {config.crWeight.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.crWeight]}
+                      onValueChange={v => setConfig(c => ({ ...c, crWeight: v[0] }))}
+                      min={0} max={0.25} step={0.01}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
+                      {config.crWeight.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -120,17 +120,7 @@ export function getCategorizedErrors(
 ): Record<ErrorType, ComputeServerForErrors[]> {
   const categorized = {} as Record<ErrorType, ComputeServerForErrors[]>;
 
-  const errorTypes: ErrorType[] = [
-    'HARDWARE_FAILURE',
-    'RESOURCE_FAILURE',
-    'STORAGE_FAILURE',
-    'NETWORK_FAILURE',
-    'IP_FAILURE',
-    'POWER_FAILURE',
-    'HOST_FAILURE',
-  ];
-
-  errorTypes.forEach(type => {
+  (Object.keys(ERROR_CLASSIFICATIONS) as ErrorType[]).forEach(type => {
     categorized[type] = errors.filter(e => e.error_type === type);
   });
 

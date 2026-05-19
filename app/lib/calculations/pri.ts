@@ -17,6 +17,9 @@ export interface PRIConfig {
   /** Weight applied to the fleet-deviation penalty: points = max(0, fleetPRI − zonePRI) × impact.
    *  Range [0, 0.2]. Post-hoc deduction after all other breakdown components. */
   fleetDeviationImpact: number;
+  /** Weight applied to Capacity Reliability loss: crLoss = (1 − CR) × crWeight × 100.
+   *  CR = weighted resource saturation across hosts via 1/(1+u²) decay. Range [0, 0.25]. */
+  crWeight: number;
   colorThresholds: ColorThresholds;
 }
 
@@ -24,6 +27,7 @@ export const DEFAULT_PRI_CONFIG: PRIConfig = {
   errorWeights: DEFAULT_ERROR_WEIGHTS,
   outlierResourceImpact: { memory: 0.3, cores: 0.3, storage: 0.2 },
   fleetDeviationImpact: 0.05,
+  crWeight: 0.15,
   colorThresholds: {
     pri: { green: 85, amber: 70 },
     criticalRatio: { amber: 0.3, red: 0.6 },
@@ -53,6 +57,8 @@ export interface PRIBreakdown {
   stabilityLoss: number;
   errorLoss: number;
   outlierLoss: number;
+  /** Points deducted due to host capacity saturation (CR formula). 0 when no hosts in scope. */
+  crLoss: number;
   /** Points deducted because this zone's PRI is below the fleet baseline. 0 when no fleet context. */
   fleetDeviationLoss: number;
   total: number; // base + all losses (clamped to [0, 100])
@@ -92,6 +98,8 @@ export interface PRICalculationMetrics {
   esxFailShare: number;
   /** Points deducted due to fleet-deviation penalty. 0 when no fleet context provided. */
   fleetDeviationLoss: number;
+  /** Capacity Reliability score in (0, 1]. 1.0 = no saturation, lower = overcommitted hosts. */
+  crScore: number;
   color: ZoneColor;
   priScore: number;
   breakdown: PRIBreakdown;
@@ -140,6 +148,72 @@ function positiveMedian(values: Array<number | null | undefined>): number {
   return calculateMedian(valid);
 }
 
+// ── Capacity Reliability ──────────────────────────────────────────────────────
+
+export interface HostCapacityData {
+  hostId: number;
+  u_cpu: number;
+  u_mem: number;
+  u_stor: number;
+  cr: number;
+  vmCount: number;
+}
+
+/**
+ * Computes Capacity Reliability (CR) for a pool of servers.
+ *
+ * CR = 0.4·score_cpu + 0.4·score_mem + 0.2·score_stor
+ * score = 1 / (1 + u²)   where u = Σ(vm.resource) / host.resource
+ *
+ * Aggregated as a VM-count-weighted mean across hosts.
+ * Returns CR=1.0 (no penalty) when no hosts are present or no VMs are allocated.
+ */
+export function calculateCapacityReliability(
+  servers: ComputeServerData[],
+): { cr: number; perHostData: HostCapacityData[] } {
+  const hosts = servers.filter(s => s.node_type === 'HOST');
+  const vms = servers.filter(s => s.node_type === 'VM');
+
+  if (hosts.length === 0) return { cr: 1, perHostData: [] };
+
+  const vmsByHost = new Map<number, ComputeServerData[]>();
+  vms.forEach(vm => {
+    if (vm.parent_server_id !== null) {
+      const list = vmsByHost.get(vm.parent_server_id) ?? [];
+      list.push(vm);
+      vmsByHost.set(vm.parent_server_id, list);
+    }
+  });
+
+  const score = (u: number) => 1 / (1 + u * u);
+
+  const perHostData: HostCapacityData[] = hosts.map(host => {
+    const childVMs = vmsByHost.get(host.id) ?? [];
+
+    const allocCpu = childVMs.reduce((s, vm) => s + (vm.max_cores ?? 0), 0);
+    const allocMem = childVMs.reduce((s, vm) => s + (vm.max_memory ?? 0), 0);
+    const allocStor = childVMs.reduce((s, vm) => s + (vm.max_storage ?? 0), 0);
+
+    const hostCpu = host.max_cores ?? 0;
+    const hostMem = host.max_memory ?? 0;
+    const hostStor = host.max_storage ?? 0;
+
+    const u_cpu = hostCpu > 0 ? allocCpu / hostCpu : 0;
+    const u_mem = hostMem > 0 ? allocMem / hostMem : 0;
+    const u_stor = hostStor > 0 ? allocStor / hostStor : 0;
+
+    const cr = 0.4 * score(u_cpu) + 0.4 * score(u_mem) + 0.2 * score(u_stor);
+
+    return { hostId: host.id, u_cpu, u_mem, u_stor, cr, vmCount: childVMs.length };
+  });
+
+  const totalVMs = perHostData.reduce((s, h) => s + h.vmCount, 0);
+  if (totalVMs === 0) return { cr: 1, perHostData };
+
+  const weightedCR = perHostData.reduce((s, h) => s + h.cr * h.vmCount, 0) / totalVMs;
+  return { cr: weightedCR, perHostData };
+}
+
 // ── Component score functions ─────────────────────────────────────────────────
 
 /**
@@ -152,6 +226,7 @@ export function calculatePRIBreakdown(
   errorPenalty: number,
   outlierPenalty: number,
   fleetDeviationLoss: number = 0,
+  crLoss: number = 0,
 ): PRIBreakdown {
   const w = PRI_WEIGHTS;
   const successLoss = (100 - successRate) * w.successRate;
@@ -161,7 +236,7 @@ export function calculatePRIBreakdown(
 
   const total = Math.max(
     0,
-    Math.min(100, 100 - successLoss - stabilityLoss - errorLoss - outlierLoss - fleetDeviationLoss),
+    Math.min(100, 100 - successLoss - stabilityLoss - errorLoss - outlierLoss - crLoss - fleetDeviationLoss),
   );
 
   const contributions: PRIContribution[] = [
@@ -169,10 +244,11 @@ export function calculatePRIBreakdown(
     { label: 'Stability', points: -stabilityLoss },
     { label: 'Error severity', points: -errorLoss },
     { label: 'Provision time outliers', points: -outlierLoss },
+    { label: 'Capacity reliability', points: -crLoss },
     { label: 'Fleet deviation', points: -fleetDeviationLoss },
   ].sort((a, b) => a.points - b.points);
 
-  return { base: 100, successLoss, stabilityLoss, errorLoss, outlierLoss, fleetDeviationLoss, total, contributions };
+  return { base: 100, successLoss, stabilityLoss, errorLoss, outlierLoss, crLoss, fleetDeviationLoss, total, contributions };
 }
 
 export function calculatePRIScore(
@@ -372,6 +448,7 @@ export function aggregatePRIMetrics(
     criticalRatio: 0,
     esxFailShare: 0,
     fleetDeviationLoss: 0,
+    crScore: 1,
     color: 'green',
     priScore: 0,
     breakdown: {
@@ -380,6 +457,7 @@ export function aggregatePRIMetrics(
       stabilityLoss: 0,
       errorLoss: 0,
       outlierLoss: 0,
+      crLoss: 0,
       fleetDeviationLoss: 0,
       total: 0,
       contributions: [],
@@ -433,15 +511,19 @@ export function aggregatePRIMetrics(
 
   const outlier = calculateOutlierResult(effectiveServers, cfg.outlierResourceImpact);
 
+  // Capacity Reliability: host utilization pressure via 1/(1+u²) decay
+  const { cr: crScore } = calculateCapacityReliability(servers);
+  const crLoss = (1 - crScore) * cfg.crWeight * 100;
+
   // Fleet-deviation penalty: only applied when zone PRI is below fleet baseline
-  const rawPRIBreakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty);
+  const rawPRIBreakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, 0, crLoss);
   const rawPRI = rawPRIBreakdown.total;
 
   const fleetDeviationLoss = fleetPRIScore !== undefined
     ? Math.max(0, fleetPRIScore - rawPRI) * cfg.fleetDeviationImpact
     : 0;
 
-  const breakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, fleetDeviationLoss);
+  const breakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, fleetDeviationLoss, crLoss);
 
   const priScore = breakdown.total;
 
@@ -478,6 +560,7 @@ export function aggregatePRIMetrics(
     criticalRatio,
     esxFailShare,
     fleetDeviationLoss,
+    crScore,
     color,
     priScore,
     breakdown,

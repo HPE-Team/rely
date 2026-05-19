@@ -13,7 +13,7 @@ import {
 } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { getErrorTypeLabel } from "@/app/lib/constants/error-weights";
+import { getErrorTypeLabel, PRE_PROVISION_ERRORS } from "@/app/lib/constants/error-weights";
 import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
 
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
@@ -192,7 +192,7 @@ export default function ZonePage() {
   }
 
   const preProvisionErrorData = zoneDetail.errors.error_type_breakdown
-    .filter((e) => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+    .filter((e) => PRE_PROVISION_ERRORS.includes(e.type as any))
     .map((e) => ({
       ...e,
       name: getErrorTypeLabel(e.type as any),
@@ -200,7 +200,7 @@ export default function ZonePage() {
     }));
 
   const postProvisionErrorData = zoneDetail.errors.error_type_breakdown
-    .filter((e) => !["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+    .filter((e) => !PRE_PROVISION_ERRORS.includes(e.type as any))
     .map((e) => ({
       ...e,
       name: getErrorTypeLabel(e.type as any),

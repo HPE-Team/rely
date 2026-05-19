@@ -34,10 +34,10 @@ export const ERROR_CLASSIFICATIONS: Record<ErrorType, ErrorClassification> = {
   },
   POWER_FAILURE: {
     type: 'POWER_FAILURE',
-    phase: 'post-provision',
+    phase: 'pre-provision',
     severity: 'critical',
     defaultWeight: 0.95,
-    description: 'Power state failure during provisioning',
+    description: 'Power state failure before provisioning begins',
   },
   NETWORK_FAILURE: {
     type: 'NETWORK_FAILURE',
@@ -78,6 +78,7 @@ export const DEFAULT_ERROR_WEIGHTS: Record<ErrorType, number> = Object.entries(E
 );
 
 export const PRE_PROVISION_ERRORS: ErrorType[] = [
+  'POWER_FAILURE',
   'RESOURCE_FAILURE',
   'IP_FAILURE',
 ];
@@ -85,7 +86,6 @@ export const PRE_PROVISION_ERRORS: ErrorType[] = [
 export const POST_PROVISION_ERRORS: ErrorType[] = [
   'HARDWARE_FAILURE',
   'STORAGE_FAILURE',
-  'POWER_FAILURE',
   'NETWORK_FAILURE',
   'HOST_FAILURE',
 ];

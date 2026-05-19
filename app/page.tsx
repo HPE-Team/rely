@@ -7,6 +7,7 @@ import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
 import {
   ERROR_CLASSIFICATIONS,
   getErrorTypeLabel,
+  PRE_PROVISION_ERRORS,
   type ErrorType,
 } from "@/app/lib/constants/error-weights";
 import Image from "next/image";
@@ -119,7 +120,7 @@ export default function Dashboard() {
   const preProvisionErrorData = useMemo(
     () =>
       (aggregate?.errors.by_type ?? [])
-        .filter((e) => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+        .filter((e) => PRE_PROVISION_ERRORS.includes(e.type as any))
         .map((e) => ({
           type: e.type,
           name: getErrorLabel(e.type),
@@ -132,7 +133,7 @@ export default function Dashboard() {
   const postProvisionErrorData = useMemo(
     () =>
       (aggregate?.errors.by_type ?? [])
-        .filter((e) => !["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+        .filter((e) => !PRE_PROVISION_ERRORS.includes(e.type as any))
         .map((e) => ({
           type: e.type,
           name: getErrorLabel(e.type),

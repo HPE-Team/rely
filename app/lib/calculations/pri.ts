@@ -170,9 +170,7 @@ export function calculatePRIBreakdown(
     { label: 'Error severity', points: -errorLoss },
     { label: 'Provision time outliers', points: -outlierLoss },
     { label: 'Fleet deviation', points: -fleetDeviationLoss },
-  ]
-    .filter(c => c.label !== 'Fleet deviation' || fleetDeviationLoss > 0)
-    .sort((a, b) => a.points - b.points);
+  ].sort((a, b) => a.points - b.points);
 
   return { base: 100, successLoss, stabilityLoss, errorLoss, outlierLoss, fleetDeviationLoss, total, contributions };
 }
@@ -443,9 +441,7 @@ export function aggregatePRIMetrics(
     ? Math.max(0, fleetPRIScore - rawPRI) * cfg.fleetDeviationImpact
     : 0;
 
-  const breakdown = fleetDeviationLoss > 0
-    ? calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, fleetDeviationLoss)
-    : rawPRIBreakdown;
+  const breakdown = calculatePRIBreakdown(successRate, stabilityScore, errorPenalty, outlier.penalty, fleetDeviationLoss);
 
   const priScore = breakdown.total;
 

@@ -14,7 +14,7 @@ import {
   type ComputeServerForErrors,
 } from "@/app/lib/calculations/errors";
 import { parsePRIConfig } from "@/app/lib/config/pri-config";
-import type { ErrorType } from "@/app/lib/constants/error-weights";
+import { PRE_PROVISION_ERRORS, type ErrorType } from "@/app/lib/constants/error-weights";
 
 type ZoneComparison = {
   zone_id: string;
@@ -78,7 +78,7 @@ function buildMockAggregateData() {
   const avgPriScore = MOCK_ZONES.reduce((sum, z) => sum + z.pri_score, 0) / totalZones;
   const avgSuccessRate = MOCK_ZONES.reduce((sum, z) => sum + z.success_rate, 0) / totalZones;
   const preProvisionTotal = MOCK_ERROR_BREAKDOWN
-    .filter(e => ["RESOURCE_FAILURE", "IP_FAILURE"].includes(e.type))
+    .filter(e => PRE_PROVISION_ERRORS.includes(e.type as any))
     .reduce((sum, e) => sum + e.count, 0);
   const sortedZones = [...MOCK_ZONES].sort((a, b) => a.pri_score - b.pri_score);
 

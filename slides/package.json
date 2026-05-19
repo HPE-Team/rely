@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "slidev slides.md",
-    "build": "slidev build slides.md",
+    "build": "slidev build slides.md --base /slides/",
     "export": "slidev export slides.md --format pptx"
   },
   "dependencies": {

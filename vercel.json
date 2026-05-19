@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/slides", "destination": "https://rely-slides.vercel.app/" },
+    { "source": "/slides/:path*", "destination": "https://rely-slides.vercel.app/:path*" }
+  ]
+}

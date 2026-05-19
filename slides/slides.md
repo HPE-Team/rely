@@ -606,10 +606,11 @@ layout: center
 ---
 
 <div style="display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center;position:relative">
-  <div style="background:rgba(64,96,208,0.08);border:1px solid rgba(64,96,208,0.2);border-radius:12px;padding:6px 18px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#4060D0">Live Demo</div>
+  <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:12px;padding:6px 18px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#4ade80">Live Demo</div>
   <div>
     <div style="font-size:48px;font-weight:700;letter-spacing:-0.03em;color:#fff;font-family:'Space Grotesk',sans-serif;line-height:1">Rel<span style="color:#4060D0">y</span>.</div>
     <div style="color:#a8a8a8;margin-top:12px;font-size:15px;font-family:'Space Grotesk',sans-serif;max-width:480px;line-height:1.6">Zone overview · Host mesh · PRI breakdown · Color classification · Settings panel</div>
+    <a href="https://relyhpe.vercel.app" target="_blank" style="display:inline-block;margin-top:18px;font-family:'Geist Mono',monospace;font-size:13px;color:#4060D0;text-decoration:none;border-bottom:1px solid rgba(64,96,208,0.35);padding-bottom:2px;letter-spacing:0.02em">relyhpe.vercel.app ↗</a>
   </div>
 </div>
 
@@ -622,6 +623,7 @@ layout: center
     <path d="M14 2.33333V25.6667M22.2496 5.75042L5.7504 22.2496M25.6666 14H2.33331M22.2496 22.2496L5.7504 5.75042" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
   <div>
+    <div style="font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#4060D0;font-family:'Geist Mono',monospace;margin-bottom:12px">Thank You</div>
     <div style="font-size:42px;font-weight:700;letter-spacing:-0.03em;color:#fff;font-family:'Space Grotesk',sans-serif;line-height:1">Rel<span style="color:#4060D0">y</span>.</div>
     <div style="color:#a8a8a8;margin-top:10px;font-size:15px;font-family:'Space Grotesk',sans-serif">Built for infrastructure operators who need <strong style="color:#fff">clarity</strong>, not more dashboards.</div>
   </div>

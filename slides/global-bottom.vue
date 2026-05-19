@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useNav } from '@slidev/client'
 
-const { currentSlideNo } = useNav()
+const { currentSlideNo, total } = useNav()
 
 const sections = [
   { label: 'Problem',      pages: [2, 3] },
@@ -41,7 +41,9 @@ const formulaProgress = computed(() => {
       </div>
       <div v-if="i < sections.length - 1" class="toc-sep" />
     </template>
+    <div class="page-num">{{ currentSlideNo }} / {{ total }}</div>
   </div>
+  <div v-else-if="currentSlideNo > 1" class="page-num-float">{{ currentSlideNo }} / {{ total }}</div>
 </template>
 
 <style scoped>
@@ -119,5 +121,27 @@ const formulaProgress = computed(() => {
   color:       rgba(64, 96, 208, 0.7);
   letter-spacing: 0.04em;
   margin-left: 2px;
+}
+
+.page-num {
+  position:    absolute;
+  right:       18px;
+  font-family: 'Geist Mono', monospace;
+  font-size:   9.5px;
+  color:       #363636;
+  letter-spacing: 0.06em;
+  user-select: none;
+}
+
+.page-num-float {
+  position:    fixed;
+  bottom:      10px;
+  right:       18px;
+  font-family: 'Geist Mono', monospace;
+  font-size:   9.5px;
+  color:       #363636;
+  letter-spacing: 0.06em;
+  user-select: none;
+  z-index:     999;
 }
 </style>

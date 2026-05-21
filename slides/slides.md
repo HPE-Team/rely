@@ -49,23 +49,35 @@ layout: default
 
 # The Problem
 
-<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">Modern cloud platforms rely heavily on automated provisioning systems. Provisioning jobs often fail due to configuration issues, environmental constraints, or platform limitations — and <strong style="color:#fff">understanding why is critical for scalable, resilient cloud operations.</strong></p>
+<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">Provisioning failures are inevitable. <strong style="color:#fff">Knowing which zone is reliable, why failures happen, and where the next one is coming from</strong> — that's what operators don't have today.</p>
 
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:start">
-  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px">
-    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#f87171">Scenario 1</div>
-    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">Deployment decision paralysis</div>
-    <div style="color:#808080;font-size:12px;line-height:1.55">Which zone for this critical batch job — AWS or Azure? An operator opens 5 dashboards, cross-references 3 Jira tickets, and asks two colleagues. They pick a zone based on gut feel. It fails due to IP exhaustion that was visible in the logs three days ago.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:stretch">
+  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-top:2px solid #fbbf24;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#fbbf24">Before deployment</div>
+    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">No single source of truth</div>
+    <div style="color:#808080;font-size:12px;line-height:1.55">Operator checks 5 dashboards, asks 2 colleagues, and still picks a zone on gut feel. The IP exhaustion signal was in the logs 3 days ago.</div>
+    <div style="margin-top:auto;background:#1c1810;border:1px solid rgba(251,191,36,0.18);border-radius:6px;padding:10px 12px;text-align:center">
+      <div style="font-family:'Geist Mono',monospace;font-size:20px;font-weight:700;color:#fbbf24;line-height:1">5 dashboards</div>
+      <div style="font-size:10.5px;color:#808080;margin-top:4px">checked before every deployment — zero confidence</div>
+    </div>
   </div>
-  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px">
-    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#fbbf24">Scenario 2</div>
-    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">Silent reliability degradation</div>
-    <div style="color:#808080;font-size:12px;line-height:1.55">Zone success rate drifts from 97% to 81% over two weeks. No alert fires. No dashboard highlights it. Then 40 VMs fail simultaneously during a time-critical deployment — and the on-call engineer has no idea this zone had been degrading.</div>
+  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-top:2px solid #f87171;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#f87171">During operations</div>
+    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">Silent reliability drift</div>
+    <div style="color:#808080;font-size:12px;line-height:1.55">Zone success rate drifts from 97% → 81% over two weeks. No alert fires. Then 40 VMs fail simultaneously — and the on-call had no idea.</div>
+    <div style="margin-top:auto;background:#1f0f0e;border:1px solid rgba(248,113,113,0.18);border-radius:6px;padding:10px 12px;text-align:center">
+      <div style="font-family:'Geist Mono',monospace;font-size:20px;font-weight:700;color:#f87171;line-height:1">97% → 81%</div>
+      <div style="font-size:10.5px;color:#808080;margin-top:4px">two-week drift — completely invisible</div>
+    </div>
   </div>
-  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:8px">
-    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#a8a8a8">Scenario 3</div>
-    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">Post-mortem guesswork</div>
-    <div style="color:#808080;font-size:12px;line-height:1.55">After a failure cascade, root cause analysis takes hours. Was it hardware? Network? ESX host failure pulling down VMs? IP exhaustion? With no structured classification, every incident is reconstructed from scratch from raw logs.</div>
+  <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-top:2px solid #f87171;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#f87171">After failure</div>
+    <div style="color:#fff;font-size:13px;font-weight:600;line-height:1.3">Post-mortem from scratch</div>
+    <div style="color:#808080;font-size:12px;line-height:1.55">Hardware? Network? ESX host cascade? IP exhaustion? With no structured classification, every incident is reconstructed manually from raw logs.</div>
+    <div style="margin-top:auto;background:#1f0f0e;border:1px solid rgba(248,113,113,0.18);border-radius:6px;padding:10px 12px;text-align:center">
+      <div style="font-family:'Geist Mono',monospace;font-size:20px;font-weight:700;color:#f87171;line-height:1">Hours of RCA</div>
+      <div style="font-size:10.5px;color:#808080;margin-top:4px">per incident — every time, from zero</div>
+    </div>
   </div>
 </div>
 
@@ -118,6 +130,177 @@ We scanned common cloud provider failure patterns and identified **7 classes** c
 
 <div class="insight">
   <strong>Phase matters</strong> — pre-provision errors (POWER, IP, RESOURCE) fire before allocation commits. Post-provision errors indicate failures after the workload was placed. Rely tracks both and surfaces them separately in the error breakdown.
+</div>
+
+---
+layout: default
+---
+
+
+# Data Generation Overview
+
+<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">A <strong style="color:#fff">synthetic provisioning engine</strong> that produces realistic fleet data in five phases — zones, hosts, VMs, cascades, and consistency cleanup.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;margin-top:4px">
+  <div style="padding-right:28px;border-right:1px solid rgba(255,255,255,0.09);display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Simulation phases</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #4060D0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px">
+        <span style="color:#4060D0;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0">01</span>
+        <div><span style="color:#fff;font-size:12.5px;font-weight:600">Zone setup</span><span style="color:#606060;font-size:11.5px"> — 5 zones, each with base failure rate + IP pool</span></div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #4060D0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px">
+        <span style="color:#4060D0;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0">02</span>
+        <div><span style="color:#fff;font-size:12.5px;font-weight:600">Host generation</span><span style="color:#606060;font-size:11.5px"> — 250 ESX hosts across zones</span></div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #4060D0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px">
+        <span style="color:#4060D0;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0">03</span>
+        <div><span style="color:#fff;font-size:12.5px;font-weight:600">VM generation</span><span style="color:#606060;font-size:11.5px"> — 2,250 VMs through failure pipeline</span></div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #4060D0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px">
+        <span style="color:#4060D0;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0">04</span>
+        <div><span style="color:#fff;font-size:12.5px;font-weight:600">Cascade pass</span><span style="color:#606060;font-size:11.5px"> — host crash → all child VMs fail</span></div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #4060D0;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px">
+        <span style="color:#4060D0;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0">05</span>
+        <div><span style="color:#fff;font-size:12.5px;font-weight:600">Power consistency</span><span style="color:#606060;font-size:11.5px"> — fix impossible state combinations</span></div>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:auto">VMs are generated <strong>optimistically</strong>, then cascade + consistency passes correct in bulk — simpler than threading failure logic per VM.</div>
+  </div>
+  <div style="padding-left:28px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Zone configuration</div>
+    <table>
+      <thead><tr><th>Zone</th><th>Failure Rate</th><th>IP Pool</th><th>Character</th></tr></thead>
+      <tbody>
+        <tr><td>zone-a</td><td style="color:#4ade80">0.5%</td><td>500</td><td>Healthy baseline</td></tr>
+        <tr><td>zone-b</td><td style="color:#4ade80">2%</td><td>400</td><td>Slight degradation</td></tr>
+        <tr><td>zone-c</td><td style="color:#fbbf24">5%</td><td>300</td><td>Moderate risk</td></tr>
+        <tr><td>zone-d</td><td style="color:#f87171">10%</td><td>250</td><td>High failure zone</td></tr>
+        <tr><td>zone-e</td><td style="color:#4ade80">0%</td><td>1000</td><td>Perfect — control</td></tr>
+      </tbody>
+    </table>
+    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">VM size distribution</div>
+      <div style="color:#a8a8a8;font-size:12px;line-height:1.55"><span style="color:#fff;font-weight:600">40%</span> small (2 GB, 2 vCPU) · <span style="color:#fff;font-weight:600">35%</span> medium (4 GB, 4 vCPU) · <span style="color:#fff;font-weight:600">25%</span> large (8 GB, 8 vCPU). Larger VMs are deliberately more failure-prone — bigger workloads stress resources harder.</div>
+    </div>
+    <div class="insight" style="margin-top:auto">Zone-d's tight IP pool (<strong>250 IPs for ~450 VMs</strong>) creates a realistic resource exhaustion cliff mid-generation.</div>
+  </div>
+</div>
+
+---
+layout: default
+---
+
+
+# The Failure Pipeline
+
+<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">Every VM walks through <strong style="color:#fff">5 sequential stages</strong>. First failure wins — the remaining checks are skipped, and provision progress freezes at that stage.</p>
+
+<div style="display:flex;flex-direction:column;gap:8px;flex:1;margin-top:4px">
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden">
+    <div style="background:#2e2e2e;padding:6px 10px;font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4060D0;font-family:'Geist Mono',monospace;display:flex;align-items:center">Stage</div>
+    <div style="background:#2e2e2e;padding:6px 10px;font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4060D0;font-family:'Geist Mono',monospace;border-left:1px solid rgba(255,255,255,0.04)">Check</div>
+    <div style="background:#2e2e2e;padding:6px 10px;font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4060D0;font-family:'Geist Mono',monospace;border-left:1px solid rgba(255,255,255,0.04)">Failure driver</div>
+    <div style="background:#2e2e2e;padding:6px 10px;font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4060D0;font-family:'Geist Mono',monospace;border-left:1px solid rgba(255,255,255,0.04)">Progress</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:#1f0f0e;border:1px solid rgba(248,113,113,0.12);border-left:3px solid #f87171;border-radius:8px;overflow:hidden">
+    <div style="padding:8px 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#f87171;display:flex;align-items:center">1</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="color:#fff;font-size:12px;font-weight:600">Power check</div><div style="color:#808080;font-size:11px">Host powered on?</div></div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04);color:#a8a8a8;font-size:11.5px"><strong style="color:#fff">Deterministic</strong> — host power_state = off → instant fail</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="background:rgba(248,113,113,0.15);border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:#f87171;display:inline-block">0 – 10%</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:#1c1810;border:1px solid rgba(251,191,36,0.12);border-left:3px solid #fbbf24;border-radius:8px;overflow:hidden">
+    <div style="padding:8px 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#fbbf24;display:flex;align-items:center">2</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="color:#fff;font-size:12px;font-weight:600">Resource alloc</div><div style="color:#808080;font-size:11px">CPU/memory available?</div></div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04);color:#a8a8a8;font-size:11.5px"><strong style="color:#fff">Probabilistic</strong> — host health + 8 GB VMs add +15%</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="background:rgba(251,191,36,0.15);border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:#fbbf24;display:inline-block">10 – 25%</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:#1c1810;border:1px solid rgba(251,191,36,0.12);border-left:3px solid #fbbf24;border-radius:8px;overflow:hidden">
+    <div style="padding:8px 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#fbbf24;display:flex;align-items:center">3</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="color:#fff;font-size:12px;font-weight:600">IP allocation</div><div style="color:#808080;font-size:11px">Zone IPs remaining?</div></div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04);color:#a8a8a8;font-size:11.5px"><strong style="color:#fff">Cumulative</strong> — pool drains per VM, cliff at zero</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="background:rgba(251,191,36,0.15);border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:#fbbf24;display:inline-block">35 – 55%</div></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;padding:0 8px">
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+    <span style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace;white-space:nowrap">PRE-PROVISION COMPLETE — proceed to mid/post stages</span>
+    <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:rgba(64,96,208,0.06);border:1px solid rgba(64,96,208,0.15);border-left:3px solid #4060D0;border-radius:8px;overflow:hidden">
+    <div style="padding:8px 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#4060D0;display:flex;align-items:center">4</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="color:#fff;font-size:12px;font-weight:600">Network conn</div><div style="color:#808080;font-size:11px">Network quality ≥ 0.10?</div></div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04);color:#a8a8a8;font-size:11.5px"><strong style="color:#fff">Threshold</strong> — host health + peak hours degrade quality</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="background:rgba(64,96,208,0.15);border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:#4060D0;display:inline-block">50 – 75%</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:0;background:rgba(64,96,208,0.06);border:1px solid rgba(64,96,208,0.15);border-left:3px solid #4060D0;border-radius:8px;overflow:hidden">
+    <div style="padding:8px 10px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#4060D0;display:flex;align-items:center">5</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="color:#fff;font-size:12px;font-weight:600">Storage attach</div><div style="color:#808080;font-size:11px">Disk allocation OK?</div></div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04);color:#a8a8a8;font-size:11.5px"><strong style="color:#fff">Multi-factor</strong> — host health + disk size + network quality</div>
+    <div style="padding:8px 10px;border-left:1px solid rgba(255,255,255,0.04)"><div style="background:rgba(64,96,208,0.15);border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:11px;color:#4060D0;display:inline-block">70 – 95%</div></div>
+  </div>
+
+  <div class="insight" style="margin-top:auto">Progress % = <strong>how far the progress bar got</strong> before it stopped. Storage failures reach 70–95% because disk attach is one of the last steps in real provisioning.</div>
+</div>
+
+---
+layout: default
+---
+
+
+# Cascades & Environmental Signals
+
+<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">After individual generation, <strong style="color:#fff">two post-passes</strong> correct the data. Plus, environmental factors shape every probability in the pipeline.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;margin-top:4px">
+  <div style="padding-right:28px;border-right:1px solid rgba(255,255,255,0.09);display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Cascade pass — host crash propagation</div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-left:3px solid #f87171;border-radius:8px;padding:12px 16px;font-family:'Geist Mono',monospace;font-size:11.5px;line-height:2;color:#d4d4d4">
+      <div><span style="color:#808080">FOR EACH</span> vm <span style="color:#808080">WHERE</span> parent_host.status = <span style="color:#f87171">'failed'</span></div>
+      <div>  vm.status → <span style="color:#f87171">'failed'</span></div>
+      <div>  vm.error_type → <span style="color:#f87171">'HOST_FAILURE'</span></div>
+      <div>  vm.provision_pct → <span style="color:#a8a8a8">random(60, 95)</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="background:#1f0f0e;border:1px solid rgba(248,113,113,0.18);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#f87171;font-family:'Geist Mono',monospace">Raw data</div>
+        <div style="color:#a8a8a8;font-size:11.5px;line-height:1.5">1 host + 15 VMs → <strong style="color:#f87171">16 failed rows</strong> in the database. Full blast radius preserved.</div>
+      </div>
+      <div style="background:#0e1f12;border:1px solid rgba(74,222,128,0.18);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4ade80;font-family:'Geist Mono',monospace">PRI scoring</div>
+        <div style="color:#a8a8a8;font-size:11.5px;line-height:1.5">Cascade dedup → only <strong style="color:#4ade80">1 failure</strong> penalizes the score. VMs surfaced separately.</div>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:auto">Data shows all 16 failures — the <strong>PRI calculator</strong> deduplicates. Dashboard shows the blast radius without inflating the score.</div>
+  </div>
+  <div style="padding-left:28px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Environmental signals — what shapes failure probability</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="color:#fff;font-size:12px;font-weight:600">Host health</span><span style="background:rgba(248,113,113,0.12);color:#f87171;font-size:9px;padding:1px 6px;border-radius:3px;font-family:'Geist Mono',monospace;font-weight:700">INHERITED</span></div>
+        <div style="color:#808080;font-size:11.5px;line-height:1.45">Derived from zone base_failure_rate × random(0.8, 1.0). Failed host = 0. Degraded hosts degrade all child VMs.</div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="color:#fff;font-size:12px;font-weight:600">Network quality</span><span style="background:rgba(251,191,36,0.12);color:#fbbf24;font-size:9px;padding:1px 6px;border-radius:3px;font-family:'Geist Mono',monospace;font-weight:700">COMPOSITE</span></div>
+        <div style="color:#808080;font-size:11.5px;line-height:1.45">random(0, 0.85) + host_health bonus. During peak hours (18:00–22:00), −0.20 penalty. Affects network + storage stages.</div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="color:#fff;font-size:12px;font-weight:600">VM size tax</span><span style="background:rgba(64,96,208,0.12);color:#4060D0;font-size:9px;padding:1px 6px;border-radius:3px;font-family:'Geist Mono',monospace;font-weight:700">ADDITIVE</span></div>
+        <div style="color:#808080;font-size:11.5px;line-height:1.45">8 GB VMs: +15% resource failure. 500 GB disk: +10% storage failure. Large workloads carry inherently higher risk.</div>
+      </div>
+      <div style="background:#282828;border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px"><span style="color:#fff;font-size:12px;font-weight:600">Peak hours</span><span style="background:rgba(251,191,36,0.12);color:#fbbf24;font-size:9px;padding:1px 6px;border-radius:3px;font-family:'Geist Mono',monospace;font-weight:700">18:00 – 22:00</span></div>
+        <div style="color:#808080;font-size:11.5px;line-height:1.45">Worse network quality, longer provision times (+10–25 s). Simulates real-world congestion during business-critical windows.</div>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:auto">A large VM on a degraded host during peak hours can see <strong>25%+ combined failure probability</strong> — each factor stacks.</div>
+  </div>
 </div>
 
 ---

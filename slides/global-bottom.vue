@@ -7,25 +7,25 @@ const { currentSlideNo, total } = useNav()
 const sections = [
   { label: 'Problem',      pages: [2, 3] },
   { label: 'Error Classes', pages: [4] },
-  { label: 'Data Gen',     pages: [5, 6, 7] },
-  { label: 'Research',     pages: [8] },
-  { label: 'Formula',      pages: [9, 10, 11, 12, 13, 14, 15] },
-  { label: 'Color System', pages: [16] },
-  { label: 'Tech Stack',   pages: [17] },
-  { label: 'Demo',         pages: [18] },
+  { label: 'Data Gen',     pages: [5, 6, 7, 8] },
+  { label: 'Research',     pages: [9] },
+  { label: 'Formula',      pages: [10, 11, 12, 13, 14, 15, 16] },
+  { label: 'Color System', pages: [17] },
+  { label: 'Tech Stack',   pages: [18] },
+  { label: 'Demo',         pages: [19] },
 ]
 
-const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 19)
+const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 20)
 
 const activeIndex = computed(() =>
   sections.findIndex(s => s.pages.includes(currentSlideNo.value))
 )
 
-// within Formula section, show which term (slide 9 = overview, 10-15 = terms 1-6)
+// within Formula section, show which term (slide 10 = overview, 11-16 = terms 1-6)
 const formulaProgress = computed(() => {
   const p = currentSlideNo.value
-  if (p === 9) return '0 / 6'
-  if (p >= 10 && p <= 15) return `${p - 9} / 6`
+  if (p === 10) return '0 / 6'
+  if (p >= 11 && p <= 16) return `${p - 10} / 6`
   return null
 })
 </script>

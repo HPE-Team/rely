@@ -120,13 +120,13 @@ We scanned common cloud provider failure patterns and identified **7 classes** c
 
 | Error | Phase | Severity | Covers |
 |---|---|---|---|
-| `HARDWARE_FAILURE` | Post Provision | critical | Physical component degradation |
-| `HOST_FAILURE` | Post Provision | critical | ESX / hypervisor unavailability |
-| `POWER_FAILURE` | **Pre Provision** | critical | Power state before provisioning begins |
-| `STORAGE_FAILURE` | Post Provision | critical | Disk / SAN allocation failure |
-| `NETWORK_FAILURE` | Post Provision | high | NIC / switch / routing failure |
-| `IP_FAILURE` | **Pre Provision** | high | IPAM / address reservation failure |
-| `RESOURCE_FAILURE` | **Pre Provision** | medium | CPU / RAM exhaustion at planning |
+| `POWER_FAILURE` | Pre-provision | critical | Host powered off — VM can't start |
+| `RESOURCE_FAILURE` | Pre-provision | low | CPU / RAM exhaustion at scheduling |
+| `IP_FAILURE` | Pre-provision | medium | IPAM pool drained — no address available |
+| `NETWORK_FAILURE` | Post-provision | high | NIC / switch failure |
+| `STORAGE_FAILURE` | Post-provision | critical | Disk attach failed |
+| `HOST_FAILURE` | Post-provision | critical | ESX host crash |
+| `HARDWARE_FAILURE` | Host-level only | critical | Physical component failure |
 
 <div class="insight">
   <strong>Phase matters</strong> — pre-provision errors (POWER, IP, RESOURCE) fire before allocation commits. Post-provision errors indicate failures after the workload was placed. Rely tracks both and surfaces them separately in the error breakdown.
@@ -302,6 +302,30 @@ layout: default
     <div class="insight" style="margin-top:auto">A large VM on a degraded host during peak hours can see <strong>25%+ combined failure probability</strong> — each factor stacks.</div>
   </div>
 </div>
+
+---
+layout: default
+---
+
+
+# Generation Error Reference
+
+<p style="color:#a8a8a8;font-size:13px;margin:-8px 0 14px">Every error the generator can produce, in <strong style="color:#fff">pipeline order</strong>. The progress column shows how far the provision bar got before it stopped.</p>
+
+<table>
+  <thead><tr><th>Error type</th><th>Stage</th><th>Cause</th><th>Deterministic?</th><th>Progress</th></tr></thead>
+  <tbody>
+    <tr><td><code>POWER_FAILURE</code></td><td style="color:#fbbf24">Pre-provision</td><td>Host is powered off</td><td style="color:#4ade80">✅ Yes</td><td><code>0–10%</code></td></tr>
+    <tr><td><code>RESOURCE_FAILURE</code></td><td style="color:#fbbf24">Pre-provision</td><td>Can't allocate CPU / RAM</td><td style="color:#a8a8a8">❌ Probabilistic</td><td><code>10–25%</code></td></tr>
+    <tr><td><code>IP_FAILURE</code></td><td style="color:#fbbf24">Pre-provision</td><td>Zone IP pool exhausted</td><td style="color:#4ade80">✅ Yes (once pool = 0)</td><td><code>35–55%</code></td></tr>
+    <tr><td><code>NETWORK_FAILURE</code></td><td style="color:#4060D0">Mid-provision</td><td>Network quality below threshold</td><td style="color:#a8a8a8">❌ Probabilistic</td><td><code>50–75%</code></td></tr>
+    <tr><td><code>STORAGE_FAILURE</code></td><td style="color:#4060D0">Mid-provision</td><td>Disk attach failed</td><td style="color:#a8a8a8">❌ Probabilistic</td><td><code>70–95%</code></td></tr>
+    <tr><td><code>HOST_FAILURE</code></td><td style="color:#f87171">Post-provision</td><td>Host crash cascade (bulk pass)</td><td style="color:#4ade80">✅ Yes</td><td><code>60–95%</code></td></tr>
+    <tr><td><code>HARDWARE_FAILURE</code></td><td style="color:#808080">Host-level only</td><td>Host failed to provision</td><td style="color:#a8a8a8">❌ Probabilistic</td><td><code>20–80%</code></td></tr>
+  </tbody>
+</table>
+
+<div class="insight" style="margin-top:auto"><code>HARDWARE_FAILURE</code> is the only error assigned to <strong>hosts</strong>, not VMs. All others are VM-level — <code>HOST_FAILURE</code> being the exception where the cascade pass overwrites individual VM errors in bulk.</div>
 
 ---
 layout: default

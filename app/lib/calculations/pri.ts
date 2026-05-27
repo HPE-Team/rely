@@ -391,12 +391,13 @@ export function calculateColor(
   criticalRatio: number,
   esxFailShare: number,
   thresholds: ColorThresholds = DEFAULT_PRI_CONFIG.colorThresholds,
+  criticalCount: number = 0,
 ): ZoneColor {
   const t = thresholds;
 
   if (
     priScore < t.pri.amber ||
-    criticalRatio >= t.criticalRatio.red ||
+    (criticalCount >= 2 && criticalRatio >= t.criticalRatio.red) ||
     esxFailShare >= t.esxFailShare.red
   ) {
     return 'red';
@@ -404,7 +405,7 @@ export function calculateColor(
 
   if (
     priScore >= t.pri.green &&
-    criticalRatio < t.criticalRatio.amber &&
+    (criticalCount < 2 || criticalRatio < t.criticalRatio.amber) &&
     esxFailShare < t.esxFailShare.amber
   ) {
     return 'green';
@@ -550,7 +551,7 @@ export function aggregatePRIMetrics(
   ).length;
   const esxFailShare = totalServers > 0 ? failedHosts / totalServers : 0;
 
-  const color = calculateColor(priScore, criticalRatio, esxFailShare, cfg.colorThresholds);
+  const color = calculateColor(priScore, criticalRatio, esxFailShare, cfg.colorThresholds, criticalCount);
 
   return {
     totalServers,

@@ -20,7 +20,7 @@ interface PRIChartProps {
 export function PRIChart({ data, isLoading = false, title = 'PRI Score Trend' }: PRIChartProps) {
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>Last 30 days</CardDescription>
@@ -60,12 +60,13 @@ export function PRIChart({ data, isLoading = false, title = 'PRI Score Trend' }:
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                border: '1px solid #888',
-                borderRadius: '4px',
+                backgroundColor: 'var(--popover)',
+                border: '1px solid color-mix(in oklch, var(--border) 60%, transparent)',
+                borderRadius: '0.5rem',
+                color: 'var(--popover-foreground)',
               }}
               formatter={(value: any) => (value as number).toFixed(2)}
-              labelStyle={{ color: '#fff' }}
+              labelStyle={{ color: 'var(--popover-foreground)' }}
             />
             <Legend />
             <Line

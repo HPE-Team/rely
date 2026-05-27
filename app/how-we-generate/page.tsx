@@ -111,7 +111,7 @@ export default async function HowWeGeneratePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-10">
-          <article className="relative group rounded-xl border border-border/40 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
+          <article className="relative group rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
             <MarkdownContent source={source} highlighted={highlighted} />
 
             <div className="print:hidden pointer-events-none absolute top-4 right-4 z-10">

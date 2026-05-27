@@ -437,7 +437,7 @@ export default function Dashboard() {
 
         {/* Empty State */}
         {!isLoading && zones.length === 0 && !error && (
-          <Card>
+          <Card className="border-border/50 shadow-sm">
             <CardHeader>
               <CardTitle>No Zones Found</CardTitle>
               <CardDescription>

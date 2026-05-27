@@ -52,7 +52,7 @@ export function ZoneOverviewCard({
 
   return (
     <Link href={`/zone/${zone_id}`}>
-      <Card className="cursor-pointer transition-all hover:shadow-lg hover:border-neutral-600">
+      <Card className="cursor-pointer transition-all border-border/50 shadow-sm hover:shadow-md hover:border-border/80">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>

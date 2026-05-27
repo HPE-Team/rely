@@ -273,7 +273,7 @@ export default function ZonePage() {
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card
-            className="cursor-pointer transition-colors hover:border-neutral-600"
+            className="cursor-pointer transition-colors border-border/50 shadow-sm hover:border-border/80 hover:shadow-md"
             onClick={() => setPriBreakdownTarget("overall")}
           >
             <CardHeader className="pb-2">
@@ -291,7 +291,7 @@ export default function ZonePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border/50 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Success Rate
@@ -308,7 +308,7 @@ export default function ZonePage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-border/50 shadow-sm">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -492,7 +492,7 @@ export default function ZonePage() {
             </DialogContent>
           </Dialog>
 
-          <Card>
+          <Card className="border-border/50 shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Stability

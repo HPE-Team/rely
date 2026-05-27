@@ -398,7 +398,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
 
       {/* Schema tab */}
       {tab === "schema" && (
-        <article className="rounded-xl border border-border/40 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
+        <article className="rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
           <MarkdownContent source={schemaSource} highlighted={{}} />
         </article>
       )}
@@ -507,7 +507,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
           </div>
 
           {/* Table */}
-          <div className="rounded-xl border border-border/40 bg-surface-2/60 overflow-hidden shadow-2xl">
+          <div className="rounded-xl border border-border/50 bg-surface-2/60 overflow-hidden shadow-sm">
             <div className="overflow-x-auto scrollbar-custom">
               <table className="w-full text-sm border-collapse min-w-[100rem]">
                 <thead>

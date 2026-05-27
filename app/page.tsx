@@ -5,6 +5,8 @@ import { chartTooltipStyle, chartLabelStyle, chartItemStyle } from "@/app/lib/ch
 import { ZoneOverviewCard } from "@/app/components/dashboard/zone-overview";
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
+import { ZoneComparisonTable, type ZoneComparisonRow } from "@/app/components/dashboard/zone-comparison-table";
+import { ErrorHeatmap } from "@/app/components/dashboard/error-heatmap";
 import {
   ERROR_CLASSIFICATIONS,
   getErrorTypeLabel,
@@ -65,6 +67,7 @@ interface AggregateData {
       vms: number;
     };
   };
+  zones_comparison?: ZoneComparisonRow[];
 }
 
 function isErrorType(value: string): value is ErrorType {
@@ -365,6 +368,8 @@ export default function Dashboard() {
               <Skeleton className="h-96 w-full" />
               <Skeleton className="h-96 w-full" />
             </div>
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-56 w-full" />
           </div>
         )}
 
@@ -418,7 +423,7 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
               <ErrorDistributionChart
                 title="Fleet Error Distribution"
                 data={aggregate.errors.by_type.map((e) => ({
@@ -432,8 +437,17 @@ export default function Dashboard() {
                 postProvisionData={postProvisionErrorData}
               />
             </div>
+
+            {aggregate.zones_comparison && aggregate.zones_comparison.length > 0 && (
+              <div className="mb-8">
+                <p className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Zone Comparison</p>
+                <ZoneComparisonTable zones={aggregate.zones_comparison} />
+              </div>
+            )}
           </>
         )}
+
+        {!isLoading && <ErrorHeatmap />}
 
         {/* Empty State */}
         {!isLoading && zones.length === 0 && !error && (

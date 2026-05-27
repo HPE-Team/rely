@@ -131,6 +131,16 @@ export function calculateMedian(nums: number[]): number {
   return s.length % 2 === 0 ? (s[mid - 1] + s[mid]) / 2 : s[mid];
 }
 
+/** Linear-interpolation percentile. p ∈ [0, 100]. Returns 0 for empty arrays. */
+export function calculatePercentile(nums: number[], p: number): number {
+  if (nums.length === 0) return 0;
+  const s = sortedNums(nums);
+  const idx = (p / 100) * (s.length - 1);
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  return lo === hi ? s[lo] : s[lo] + (idx - lo) * (s[hi] - s[lo]);
+}
+
 function quartiles(nums: number[]): { q1: number; q3: number; iqr: number } {
   if (nums.length < 2) return { q1: nums[0] ?? 0, q3: nums[0] ?? 0, iqr: 0 };
   const s = sortedNums(nums);

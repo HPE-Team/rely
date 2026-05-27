@@ -36,6 +36,7 @@ interface ZoneDetail {
     failure_rate: number;
     avg_provision_time: number;
     median_provision_time: number;
+    provision_percentiles?: { p50: number; p75: number; p95: number; p99: number };
     stability_score: number;
     total_servers: number;
     successful_servers: number;
@@ -354,6 +355,19 @@ export default function ZonePage() {
                     </p>
                   </div>
                 </div>
+
+                {zoneDetail.overall.provision_percentiles && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["p50", "p75", "p95", "p99"] as const).map((p) => (
+                      <div key={p} className="rounded-lg bg-muted/40 border border-border/40 p-2.5 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-1 uppercase font-semibold">{p.toUpperCase()}</p>
+                        <p className="text-sm font-bold font-mono">
+                          {zoneDetail.overall.provision_percentiles![p].toFixed(1)}s
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {zoneDetail.overall.outlier_ratio > 0 && (
                   <div className="rounded-lg bg-yellow-500/10 border border-yellow-500/20 p-3 space-y-2">

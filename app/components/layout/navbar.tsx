@@ -151,10 +151,12 @@ function DocsDropdown() {
   );
 }
 
-// Stable across navigations — no usePathname here
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
+  const pathname = usePathname();
+  const isWide = pathname.startsWith("/data");
+  const maxWidth = isWide ? "90rem" : "80rem";
 
   useEffect(() => {
     const update = () => setIsDark(document.documentElement.classList.contains("dark"));
@@ -166,7 +168,10 @@ export function Navbar() {
 
   return (
     <div className="bg-background sticky top-0 z-40 w-full">
-      <nav className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
+      <nav
+        className="mx-auto px-4 lg:px-8 py-4 flex items-center justify-between w-full"
+        style={{ maxWidth, transition: "max-width 350ms ease" }}
+      >
         <div className="flex items-center gap-3">
           <Link
             className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
@@ -203,7 +208,10 @@ export function Navbar() {
           </Dialog>
         </div>
       </nav>
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
+      <div
+        className="mx-auto px-4 lg:px-8 w-full"
+        style={{ maxWidth, transition: "max-width 350ms ease" }}
+      >
         <hr className="border-t border-border/40" />
       </div>
     </div>

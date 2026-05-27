@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/app/lib/db/connection';
 import { compute_server2 } from '@/app/lib/db/schema';
-import { aggregatePRIMetrics, type PRIBreakdown } from '@/app/lib/calculations/pri';
+import { aggregatePRIMetrics, calculatePercentile, type PRIBreakdown } from '@/app/lib/calculations/pri';
 import { parsePRIConfig } from '@/app/lib/config/pri-config';
 import { analyzeErrorDistribution, separateErrorsByPhase, analyzeHostFailureImpact } from '@/app/lib/calculations/errors';
 import { eq } from 'drizzle-orm';
@@ -34,6 +34,7 @@ const getMockDetail = (zoneId: string) => ({
     failure_rate: 5.8,
     avg_provision_time: 45.3,
     median_provision_time: 42.1,
+    provision_percentiles: { p50: 42.1, p75: 58.4, p95: 98.7, p99: 142.3 },
     stability_score: 88.5,
     total_servers: 50,
     successful_servers: 47,
@@ -167,6 +168,14 @@ export async function GET(
 
       const r2 = (n: number) => Math.round(n * 100) / 100;
 
+      const provTimes = servers.map((s: any) => Number(s.provision_time)).filter((t: number) => t > 0);
+      const provPercentiles = {
+        p50: r2(calculatePercentile(provTimes, 50)),
+        p75: r2(calculatePercentile(provTimes, 75)),
+        p95: r2(calculatePercentile(provTimes, 95)),
+        p99: r2(calculatePercentile(provTimes, 99)),
+      };
+
       // Build outlier server list using per-server dynamic fences
       const perServerFences = zonePRIMetrics.outlierPerServerFences;
       const fenceById = new Map(perServerFences.map(f => [f.id, f]));
@@ -207,6 +216,7 @@ export async function GET(
             failure_rate: r2(zonePRIMetrics.failureRate),
             avg_provision_time: r2(zonePRIMetrics.avgProvisionTime),
             median_provision_time: r2(zonePRIMetrics.medianProvisionTime),
+            provision_percentiles: provPercentiles,
             stability_score: r2(zonePRIMetrics.stabilityScore),
             total_servers: zonePRIMetrics.totalServers,
             successful_servers: zonePRIMetrics.successfulServers,

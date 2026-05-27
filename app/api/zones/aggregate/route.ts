@@ -21,16 +21,19 @@ type ZoneComparison = {
   pri_score: number;
   success_rate: number;
   total_servers: number;
+  hosts_count: number;
+  vms_count: number;
   failed_count: number;
   error_rate: number;
+  avg_provision_time: number;
   color: ZoneColor;
 };
 
 const MOCK_ZONES = [
-  { zone_id: "zone-a", pri_score: 92.5, success_rate: 94.2, total_servers: 50, hosts_count: 10, vms_count: 40, failed_count: 3, color: "green" as ZoneColor },
-  { zone_id: "zone-b", pri_score: 87.3, success_rate: 89.5, total_servers: 45, hosts_count: 9,  vms_count: 36, failed_count: 5, color: "amber" as ZoneColor },
-  { zone_id: "zone-c", pri_score: 88.9, success_rate: 91.2, total_servers: 55, hosts_count: 11, vms_count: 44, failed_count: 5, color: "amber" as ZoneColor },
-  { zone_id: "zone-d", pri_score: 95.1, success_rate: 96.8, total_servers: 48, hosts_count: 8,  vms_count: 40, failed_count: 1, color: "green" as ZoneColor },
+  { zone_id: "zone-a", pri_score: 92.5, success_rate: 94.2, total_servers: 50, hosts_count: 10, vms_count: 40, failed_count: 3, avg_provision_time: 45.3, color: "green" as ZoneColor },
+  { zone_id: "zone-b", pri_score: 87.3, success_rate: 89.5, total_servers: 45, hosts_count: 9,  vms_count: 36, failed_count: 5, avg_provision_time: 52.1, color: "amber" as ZoneColor },
+  { zone_id: "zone-c", pri_score: 88.9, success_rate: 91.2, total_servers: 55, hosts_count: 11, vms_count: 44, failed_count: 5, avg_provision_time: 48.7, color: "amber" as ZoneColor },
+  { zone_id: "zone-d", pri_score: 95.1, success_rate: 96.8, total_servers: 48, hosts_count: 8,  vms_count: 40, failed_count: 1, avg_provision_time: 38.2, color: "green" as ZoneColor },
 ] as const;
 
 const MOCK_ERROR_BREAKDOWN: Array<{ type: ErrorType; count: number }> = [
@@ -111,8 +114,11 @@ function buildMockAggregateData() {
       pri_score: z.pri_score,
       success_rate: z.success_rate,
       total_servers: z.total_servers,
+      hosts_count: z.hosts_count,
+      vms_count: z.vms_count,
       failed_count: z.failed_count,
       error_rate: z.total_servers > 0 ? (z.failed_count / z.total_servers) * 100 : 0,
+      avg_provision_time: z.avg_provision_time,
       color: z.color,
     })),
   };
@@ -168,15 +174,20 @@ export async function GET(request: Request) {
     const zoneComparison: ZoneComparison[] = Array.from(zoneIds).map(zoneId => {
       const zoneServers = serversByZone.get(zoneId) ?? [];
       const m = aggregatePRIMetrics(zoneServers.map(toPRIInput), config, fleetPRIScore);
+      const hostsCount = zoneServers.filter(s => s.node_type === 'HOST').length;
+      const vmsCount = zoneServers.filter(s => s.node_type === 'VM').length;
       return {
         zone_id: zoneId,
         pri_score: Number(m.priScore.toFixed(2)),
         success_rate: Number(m.successRate.toFixed(2)),
         total_servers: m.totalServers,
+        hosts_count: hostsCount,
+        vms_count: vmsCount,
         failed_count: m.failedServers,
         error_rate: m.totalServers > 0
           ? Number(((m.failedServers / m.totalServers) * 100).toFixed(2))
           : 0,
+        avg_provision_time: Number(m.avgProvisionTime.toFixed(2)),
         color: m.color,
       };
     });

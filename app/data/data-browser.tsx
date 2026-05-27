@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
-import { MarkdownContent } from "@/app/how-we-calculate/markdown-content";
+import { MarkdownContent } from "@/app/docs/how-we-calculate/markdown-content";
 import { sileo } from "sileo";
 import { toastFill } from "@/app/lib/toast-style";
 import { NODE_TYPES, STATUSES, ERROR_TYPES, POWER_STATES } from "@/app/lib/db/schema";

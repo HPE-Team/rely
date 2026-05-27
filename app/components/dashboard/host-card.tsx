@@ -9,6 +9,7 @@ import {
 } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { formatMemory } from "@/app/lib/utils";
+import { overallLabel, labelMeta } from "@/app/lib/provisioning";
 import type { HostSummary } from "@/app/lib/types/server";
 
 interface HostCardProps {
@@ -16,9 +17,48 @@ interface HostCardProps {
   zoneId: string;
 }
 
+interface MiniBarProps {
+  label: string;
+  ratio: number;
+  vmValue: string;
+  hostValue: string;
+}
+
+function MiniBar({ label, ratio, vmValue, hostValue }: MiniBarProps) {
+  const pct = Math.min(ratio * 100, 100);
+  const over = ratio > 1;
+  const barColor =
+    ratio < 0.70 ? "bg-blue-500"
+    : ratio < 0.95 ? "bg-green-500"
+    : ratio < 1.05 ? "bg-amber-500"
+    : "bg-red-500";
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-[10px]">
+        <span className="text-muted-foreground uppercase tracking-wider font-medium">{label}</span>
+        <span className={`font-mono font-semibold ${over ? "text-red-500 dark:text-red-400" : "text-foreground"}`}>
+          {Math.round(ratio * 100)}%
+        </span>
+      </div>
+      <div className="relative h-1.5 rounded-full bg-muted/50 overflow-hidden">
+        <div
+          className={`absolute left-0 top-0 h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between text-[9px] text-muted-foreground font-mono">
+        <span>{vmValue} VMs</span>
+        <span>{hostValue} host</span>
+      </div>
+    </div>
+  );
+}
+
 export function HostCard({ host, zoneId }: HostCardProps) {
   const isHealthy = host.status === "provisioned";
-  const allVmsFailed = host.vm_count > 0 && host.failed_vm_count === host.vm_count;
+  const label = overallLabel(host.memory_ratio, host.cores_ratio, host.storage_ratio);
+  const meta = labelMeta(label);
 
   return (
     <Link href={`/zone/${zoneId}/hosts/${host.id}`}>
@@ -33,6 +73,11 @@ export function HostCard({ host, zoneId }: HostCardProps) {
               Host #{host.id}
             </CardTitle>
             <div className="flex items-center gap-1.5">
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${meta.badgeClass}`}
+              >
+                {meta.text}
+              </span>
               <Badge
                 variant="outline"
                 className={`text-[10px] font-semibold uppercase ${
@@ -104,22 +149,26 @@ export function HostCard({ host, zoneId }: HostCardProps) {
             </div>
           </div>
 
-          {/* Resource config */}
-          <div className="rounded-md bg-muted/20 border border-border/30 px-3 py-2">
-            <div className="grid grid-cols-3 gap-1 text-center">
-              <div>
-                <p className="text-[9px] text-muted-foreground uppercase tracking-wider">MEM</p>
-                <p className="font-mono text-xs font-semibold">{formatMemory(host.max_memory)}</p>
-              </div>
-              <div>
-                <p className="text-[9px] text-muted-foreground uppercase tracking-wider">CPU</p>
-                <p className="font-mono text-xs font-semibold">{host.max_cores}c</p>
-              </div>
-              <div>
-                <p className="text-[9px] text-muted-foreground uppercase tracking-wider">DISK</p>
-                <p className="font-mono text-xs font-semibold">{host.max_storage}GB</p>
-              </div>
-            </div>
+          {/* Provisioning bars */}
+          <div className="rounded-md bg-muted/20 border border-border/30 px-3 py-2.5 space-y-2.5">
+            <MiniBar
+              label="MEM"
+              ratio={host.memory_ratio}
+              vmValue={formatMemory(host.vm_memory_total)}
+              hostValue={formatMemory(host.max_memory)}
+            />
+            <MiniBar
+              label="CPU"
+              ratio={host.cores_ratio}
+              vmValue={`${host.vm_cores_total}c`}
+              hostValue={`${host.max_cores}c`}
+            />
+            <MiniBar
+              label="DISK"
+              ratio={host.storage_ratio}
+              vmValue={`${host.vm_storage_total}GB`}
+              hostValue={`${host.max_storage}GB`}
+            />
           </div>
 
           {/* Provision time */}

@@ -18,6 +18,12 @@ const MOCK_HOSTS = [
     vm_count: 8,
     failed_vm_count: 1,
     success_rate: 87.5,
+    vm_memory_total: 196608,
+    vm_cores_total: 24,
+    vm_storage_total: 1536,
+    memory_ratio: 0.38,
+    cores_ratio: 0.38,
+    storage_ratio: 0.38,
   },
   {
     id: 2,
@@ -31,6 +37,12 @@ const MOCK_HOSTS = [
     vm_count: 12,
     failed_vm_count: 0,
     success_rate: 100,
+    vm_memory_total: 229376,
+    vm_cores_total: 30,
+    vm_storage_total: 1920,
+    memory_ratio: 0.88,
+    cores_ratio: 0.94,
+    storage_ratio: 0.94,
   },
   {
     id: 3,
@@ -44,6 +56,12 @@ const MOCK_HOSTS = [
     vm_count: 6,
     failed_vm_count: 6,
     success_rate: 0,
+    vm_memory_total: 557056,
+    vm_cores_total: 72,
+    vm_storage_total: 4608,
+    memory_ratio: 1.06,
+    cores_ratio: 1.13,
+    storage_ratio: 1.13,
   },
 ];
 
@@ -62,7 +80,6 @@ export async function GET(
   }
 
   try {
-    // Fetch hosts and all zone VMs in parallel — avoids N+1
     const [hosts, vms] = await Promise.all([
       db
         .select()
@@ -72,6 +89,9 @@ export async function GET(
         .select({
           parent_server_id: compute_server2.parent_server_id,
           status: compute_server2.status,
+          max_memory: compute_server2.max_memory,
+          max_cores: compute_server2.max_cores,
+          max_storage: compute_server2.max_storage,
         })
         .from(compute_server2)
         .where(and(eq(compute_server2.zone_id, zoneId), eq(compute_server2.node_type, 'VM'))),
@@ -85,20 +105,30 @@ export async function GET(
       });
     }
 
-    // Aggregate VM counts per host
-    const vmsByHost = new Map<number, { total: number; failed: number }>();
+    const vmsByHost = new Map<number, {
+      total: number; failed: number;
+      vm_memory: number; vm_cores: number; vm_storage: number;
+    }>();
+
     for (const vm of vms) {
       if (vm.parent_server_id == null) continue;
-      const entry = vmsByHost.get(vm.parent_server_id) ?? { total: 0, failed: 0 };
+      const entry = vmsByHost.get(vm.parent_server_id) ?? {
+        total: 0, failed: 0, vm_memory: 0, vm_cores: 0, vm_storage: 0,
+      };
       entry.total++;
       if (vm.status === 'failed') entry.failed++;
+      entry.vm_memory  += vm.max_memory  ?? 0;
+      entry.vm_cores   += vm.max_cores   ?? 0;
+      entry.vm_storage += vm.max_storage ?? 0;
       vmsByHost.set(vm.parent_server_id, entry);
     }
 
     const r2 = (n: number) => Math.round(n * 100) / 100;
 
     const enriched = hosts.map(h => {
-      const agg = vmsByHost.get(h.id) ?? { total: 0, failed: 0 };
+      const agg = vmsByHost.get(h.id) ?? {
+        total: 0, failed: 0, vm_memory: 0, vm_cores: 0, vm_storage: 0,
+      };
       const successRate =
         agg.total > 0 ? ((agg.total - agg.failed) / agg.total) * 100 : 100;
       return {
@@ -113,6 +143,12 @@ export async function GET(
         vm_count: agg.total,
         failed_vm_count: agg.failed,
         success_rate: r2(successRate),
+        vm_memory_total: agg.vm_memory,
+        vm_cores_total: agg.vm_cores,
+        vm_storage_total: agg.vm_storage,
+        memory_ratio:  r2(h.max_memory  > 0 ? agg.vm_memory  / h.max_memory  : 0),
+        cores_ratio:   r2(h.max_cores   > 0 ? agg.vm_cores   / h.max_cores   : 0),
+        storage_ratio: r2(h.max_storage > 0 ? agg.vm_storage / h.max_storage : 0),
       };
     });
 

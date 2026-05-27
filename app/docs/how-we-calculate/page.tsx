@@ -4,6 +4,7 @@ import { createHighlighter } from "shiki";
 import { MarkdownContent } from "./markdown-content";
 import { TableOfContents, type TocItem } from "./toc";
 import { ExportPdfButton } from "./export-pdf-button";
+import { AppBreadcrumb } from "@/app/components/ui/app-breadcrumb";
 
 const SHIKI_LANGS = [
   "ts",
@@ -22,7 +23,7 @@ let highlighterPromise: ReturnType<typeof createHighlighter> | null = null;
 function getHighlighter() {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: ["github-dark-default"],
+      themes: ["github-dark-default", "github-light-default"],
       langs: [...SHIKI_LANGS],
     });
   }
@@ -44,7 +45,8 @@ async function buildHighlightedMap(
     if (map[code]) continue;
     map[code] = highlighter.codeToHtml(code, {
       lang,
-      theme: "github-dark-default",
+      themes: { dark: "github-dark-default", light: "github-light-default" },
+      defaultColor: false,
     });
   }
   return map;
@@ -94,7 +96,11 @@ export default async function HowWeCalculatePage() {
 
   return (
     <div className="bg-background">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <AppBreadcrumb items={[
+          { label: "Dashboard", href: "/" },
+          { label: "How We Calculate" },
+        ]} />
         <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] font-mono text-brand mb-3">
             PRI CALCULATION
@@ -109,7 +115,7 @@ export default async function HowWeCalculatePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-10">
-          <article className="relative group rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
+          <article className="relative group rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-8 min-w-0">
             <MarkdownContent source={source} highlighted={highlighted} />
 
             {/* Overlay control: keep it out of the markdown flow so "first:" heading styles still apply */}

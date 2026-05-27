@@ -29,4 +29,10 @@ export interface HostSummary {
   vm_count: number;
   failed_vm_count: number;
   success_rate: number;
+  vm_memory_total: number;
+  vm_cores_total: number;
+  vm_storage_total: number;
+  memory_ratio: number;
+  cores_ratio: number;
+  storage_ratio: number;
 }

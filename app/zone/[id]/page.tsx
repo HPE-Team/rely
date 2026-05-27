@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ZoneLogo } from "@/app/components/zone-logo";
+import { AppBreadcrumb } from "@/app/components/ui/app-breadcrumb";
 import {
   Card,
   CardContent,
@@ -250,13 +251,10 @@ export default function ZonePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-        {/* Header */}
-        {/* <Link href="/">
-          <Button variant="outline" className="mb-4 gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </Button>
-        </Link> */}
+        <AppBreadcrumb items={[
+          { label: "Dashboard", href: "/" },
+          { label: formatZoneLabel(zoneDetail.zone_id) },
+        ]} />
 
         <div className="flex items-center justify-between mb-8">
           <div>

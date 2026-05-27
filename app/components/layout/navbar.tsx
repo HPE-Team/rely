@@ -7,7 +7,6 @@ import {
   BookOpen,
   ChevronDown,
   Calculator,
-  Database,
   Sparkles,
   Table2,
 } from "lucide-react";
@@ -25,13 +24,13 @@ import { ThemeToggle } from "@/app/components/layout/theme-toggle";
 
 const DOCS_LINKS = [
   {
-    href: "/how-we-calculate",
+    href: "/docs/how-we-calculate",
     label: "How We Calculate PRI",
     icon: Calculator,
     description: "The PRI formula and scoring system",
   },
   {
-    href: "/how-we-generate",
+    href: "/docs/how-we-generate",
     label: "How We Generate Data",
     icon: Sparkles,
     description: "Simulation pipeline and failure stages",
@@ -44,9 +43,117 @@ const DOCS_LINKS = [
   },
 ];
 
+// Re-renders on pathname change — owns dropdown state + active highlighting
+function DocsDropdown() {
+  const [docsOpen, setDocsOpen] = useState(false);
+  const pathname = usePathname();
+  const desktopRef = useRef<HTMLDivElement>(null);
+  const mobileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (
+        !desktopRef.current?.contains(e.target as Node) &&
+        !mobileRef.current?.contains(e.target as Node)
+      ) {
+        setDocsOpen(false);
+      }
+    }
+    if (docsOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [docsOpen]);
+
+  useEffect(() => {
+    setDocsOpen(false);
+  }, [pathname]);
+
+  const isDocsActive = pathname.startsWith("/docs/") || pathname.startsWith("/data");
+
+  return (
+    <>
+      {/* Desktop */}
+      <div ref={desktopRef} className="relative hidden sm:block">
+        <button
+          onClick={() => setDocsOpen(!docsOpen)}
+          className={`inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors cursor-pointer ${
+            docsOpen || isDocsActive
+              ? "text-foreground bg-secondary/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          Docs
+          <ChevronDown className={`w-3 h-3 transition-transform ${docsOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+          docsOpen
+            ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
+        }`}>
+          <div className="p-1.5">
+            {DOCS_LINKS.map((link) => {
+              const Icon = link.icon;
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                    active ? "bg-brand/10 text-brand" : "text-foreground hover:bg-secondary/50"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{link.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{link.description}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile */}
+      <div ref={mobileRef} className="relative sm:hidden">
+        <button
+          onClick={() => setDocsOpen(!docsOpen)}
+          aria-label="Documentation"
+          className="p-2 hover:bg-secondary/50 rounded-full transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+        >
+          <BookOpen className="w-5 h-5" />
+        </button>
+
+        <div className={`absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+          docsOpen
+            ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
+        }`}>
+          <div className="p-1.5">
+            {DOCS_LINKS.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-secondary/50"
+                >
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">{link.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Stable across navigations — no usePathname here
 export function Navbar() {
   const [open, setOpen] = useState(false);
-  const [docsOpen, setDocsOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -56,34 +163,10 @@ export function Navbar() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   }, []);
-  const docsDesktopRef = useRef<HTMLDivElement>(null);
-  const docsMobileRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      const isInsideDesktop = docsDesktopRef.current?.contains(e.target as Node);
-      const isInsideMobile = docsMobileRef.current?.contains(e.target as Node);
-      if (!isInsideDesktop && !isInsideMobile) {
-        setDocsOpen(false);
-      }
-    }
-    if (docsOpen) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [docsOpen]);
-
-  // Close dropdown on route change
-  useEffect(() => {
-    setDocsOpen(false);
-  }, [pathname]);
-
-  const isWidePage = pathname === "/data";
-  const containerClass = isWidePage ? "max-w-[90rem]" : "max-w-7xl";
 
   return (
-    <div className="bg-background/100 bg-background sticky top-0 z-40 w-full">
-      <nav className={`${containerClass} mx-auto px-4 lg:px-8 py-4 flex items-center justify-between`}>
+    <div className="bg-background sticky top-0 z-40 w-full">
+      <nav className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link
             className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
@@ -97,87 +180,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Docs dropdown — desktop */}
-          <div ref={docsDesktopRef} className="relative hidden sm:block">
-            <button
-              onClick={() => setDocsOpen(!docsOpen)}
-              className={`inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md transition-colors cursor-pointer ${docsOpen || pathname.startsWith("/how-we-") || pathname.startsWith("/data")
-                ? "text-foreground bg-secondary/50"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              Docs
-              <ChevronDown
-                className={`w-3 h-3 transition-transform ${docsOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
-              docsOpen
-                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
-            }`}>
-              <div className="p-1.5">
-                {DOCS_LINKS.map((link) => {
-                  const Icon = link.icon;
-                  const active = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
-                        ? "bg-brand/10 text-brand"
-                        : "text-foreground hover:bg-secondary/50"
-                        }`}
-                    >
-                      <Icon className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{link.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {link.description}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Docs dropdown — mobile */}
-          <div ref={docsMobileRef} className="relative sm:hidden">
-            <button
-              onClick={() => setDocsOpen(!docsOpen)}
-              aria-label="Documentation"
-              className="p-2 hover:bg-secondary/50 rounded-full transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <BookOpen className="w-5 h-5" />
-            </button>
-
-            <div className={`absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
-              docsOpen
-                ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
-            }`}>
-              <div className="p-1.5">
-                {DOCS_LINKS.map((link) => {
-                  const Icon = link.icon;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-foreground hover:bg-secondary/50"
-                    >
-                      <Icon className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm">{link.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
+          <DocsDropdown />
           <OnlineActivityIndicator />
           <ThemeToggle />
           <Dialog open={open} onOpenChange={setOpen}>
@@ -200,7 +203,7 @@ export function Navbar() {
           </Dialog>
         </div>
       </nav>
-      <div className={`${containerClass} mx-auto px-4 lg:px-8`}>
+      <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <hr className="border-t border-border/40" />
       </div>
     </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Server } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Skeleton } from "@/app/components/ui/skeleton";
+import { AppBreadcrumb } from "@/app/components/ui/app-breadcrumb";
 import { HostCard } from "@/app/components/dashboard/host-card";
 import { formatZoneLabel } from "@/app/lib/utils";
 import type { HostSummary } from "@/app/lib/types/server";
@@ -88,15 +89,15 @@ export default function ZoneHostsPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <AppBreadcrumb items={[
+          { label: "Dashboard", href: "/" },
+          { label: zoneLabel, href: `/zone/${zoneId}` },
+          { label: "Hosts" },
+        ]} />
+
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <Link href={`/zone/${zoneId}`}>
-              <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 mb-3 text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="w-3.5 h-3.5" />
-                {zoneLabel}
-              </Button>
-            </Link>
             <h1 className="text-3xl font-bold mb-1 flex items-center gap-3">
               <Server className="w-7 h-7 text-muted-foreground" />
               ESX Hosts

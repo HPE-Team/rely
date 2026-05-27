@@ -24,6 +24,7 @@ function CodeBlock({ raw, html }: { raw: string; html: string }) {
     <div className="relative group my-5">
       <pre className="rounded-lg border border-border/40 bg-surface-1 p-4 pr-12 overflow-x-auto text-sm leading-6 text-foreground">
         <code
+          data-shiki
           className="font-mono text-sm"
           dangerouslySetInnerHTML={{ __html: html }}
         />
@@ -122,10 +123,10 @@ function buildComponents(highlighted: Record<string, string>): Components {
   ),
   a: ({ href, children }) => {
     const DOC_ROUTES: Record<string, string> = {
-      "./PRI.md": "/how-we-calculate",
-      "PRI.md": "/how-we-calculate",
-      "./GENERATOR.md": "/how-we-generate",
-      "GENERATOR.md": "/how-we-generate",
+      "./PRI.md": "/docs/how-we-calculate",
+      "PRI.md": "/docs/how-we-calculate",
+      "./GENERATOR.md": "/docs/how-we-generate",
+      "GENERATOR.md": "/docs/how-we-generate",
       "./SCHEMA.md": "/data",
       "SCHEMA.md": "/data",
     };

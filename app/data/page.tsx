@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { DataBrowser } from "./data-browser";
+import { AppBreadcrumb } from "@/app/components/ui/app-breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,11 @@ export default async function DataPage() {
 
   return (
     <div className="bg-background">
-      <div className="max-w-[90rem] mx-auto px-4 lg:px-8 py-10">
+      <div className="max-w-[90rem] mx-auto px-4 lg:px-8 py-8">
+        <AppBreadcrumb items={[
+          { label: "Dashboard", href: "/" },
+          { label: "Data Browser" },
+        ]} />
         <div className="mb-10">
           <p className="text-xs uppercase tracking-[0.2em] font-mono text-brand mb-3">
             DATABASE

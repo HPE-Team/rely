@@ -188,4 +188,13 @@ body {
   .dark .scrollbar-custom::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
   }
+
+  /* Shiki dual-theme syntax highlighting */
+  code[data-shiki] span {
+    color: var(--shiki-light) !important;
+  }
+
+  .dark code[data-shiki] span {
+    color: var(--shiki-dark) !important;
+  }
 }

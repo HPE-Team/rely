@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Cpu } from "lucide-react";
@@ -10,11 +10,61 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { VmMesh } from "@/app/components/dashboard/vm-mesh";
 import { VmDetailModal } from "@/app/components/dashboard/vm-detail-modal";
 import { formatZoneLabel, formatMemory } from "@/app/lib/utils";
+import { classifyRatio, overallLabel, labelMeta } from "@/app/lib/provisioning";
+import { AppBreadcrumb } from "@/app/components/ui/app-breadcrumb";
 import type { ComputeServerRow } from "@/app/lib/types/server";
 
 interface HostVmsData {
   host: ComputeServerRow;
   vms: ComputeServerRow[];
+}
+
+interface ResourceBarProps {
+  label: string;
+  vmTotal: number;
+  hostTotal: number;
+  vmLabel: string;
+  hostLabel: string;
+}
+
+function ResourceBar({ label, vmTotal, hostTotal, vmLabel, hostLabel }: ResourceBarProps) {
+  const ratio = hostTotal > 0 ? vmTotal / hostTotal : 0;
+  const pct = Math.min(ratio * 100, 100);
+  const over = ratio > 1;
+  const overPct = over ? Math.min((ratio - 1) * 100, 50) : 0;
+  const provLabel = classifyRatio(ratio);
+  const meta = labelMeta(provLabel);
+
+  return (
+    <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</span>
+        <span className={`text-xs font-mono font-bold ${over ? "text-red-500 dark:text-red-400" : "text-foreground"}`}>
+          {Math.round(ratio * 100)}%
+        </span>
+      </div>
+
+      {/* Bar track */}
+      <div className="relative h-2 rounded-full bg-muted/50 overflow-hidden">
+        <div
+          className={`absolute left-0 top-0 h-full rounded-l-full transition-all ${meta.barClass}`}
+          style={{ width: `${pct}%` }}
+        />
+        {over && (
+          <div
+            className="absolute top-0 h-full bg-red-500/40 rounded-r-full"
+            style={{ left: `${pct}%`, width: `${overPct}%` }}
+          />
+        )}
+      </div>
+
+      {/* Numbers */}
+      <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+        <span className={over ? "text-red-500 dark:text-red-400 font-semibold" : ""}>{vmLabel}</span>
+        <span>{hostLabel}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function HostMeshPage() {
@@ -54,6 +104,18 @@ export default function HostMeshPage() {
 
   const zoneLabel = formatZoneLabel(zoneId ?? "");
 
+  const provisioningStats = useMemo(() => {
+    if (!data) return null;
+    const { host, vms } = data;
+    const vmMemTotal     = vms.reduce((s, v) => s + v.max_memory, 0);
+    const vmCoresTotal   = vms.reduce((s, v) => s + v.max_cores, 0);
+    const vmStorageTotal = vms.reduce((s, v) => s + v.max_storage, 0);
+    const memRatio     = host.max_memory  > 0 ? vmMemTotal     / host.max_memory  : 0;
+    const coresRatio   = host.max_cores   > 0 ? vmCoresTotal   / host.max_cores   : 0;
+    const storageRatio = host.max_storage > 0 ? vmStorageTotal / host.max_storage : 0;
+    return { vmMemTotal, vmCoresTotal, vmStorageTotal, memRatio, coresRatio, storageRatio };
+  }, [data]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -62,6 +124,7 @@ export default function HostMeshPage() {
             <Skeleton className="h-10 w-64 mb-3" />
             <Skeleton className="h-5 w-96" />
           </div>
+          <Skeleton className="h-24 w-full rounded-xl" />
           <Skeleton className="w-full h-[680px] rounded-xl" />
         </div>
       </div>
@@ -93,24 +156,23 @@ export default function HostMeshPage() {
   const isHostHealthy = host.status === "provisioned";
   const failedVmCount = vms.filter(v => v.status === "failed").length;
 
+  const overall = provisioningStats
+    ? overallLabel(provisioningStats.memRatio, provisioningStats.coresRatio, provisioningStats.storageRatio)
+    : "thin";
+  const overallMeta = labelMeta(overall);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-        {/* Breadcrumb / back nav */}
-        <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
-          <Link href={`/zone/${zoneId}`} className="hover:text-foreground transition-colors">
-            {zoneLabel}
-          </Link>
-          <span>/</span>
-          <Link href={`/zone/${zoneId}/hosts`} className="hover:text-foreground transition-colors">
-            Hosts
-          </Link>
-          <span>/</span>
-          <span className="text-foreground font-medium">Host #{host.id}</span>
-        </div>
+        <AppBreadcrumb items={[
+          { label: "Dashboard", href: "/" },
+          { label: zoneLabel, href: `/zone/${zoneId}` },
+          { label: "Hosts", href: `/zone/${zoneId}/hosts` },
+          { label: `Host #${host.id}` },
+        ]} />
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
               <Cpu className="w-7 h-7 text-muted-foreground" />
@@ -136,7 +198,7 @@ export default function HostMeshPage() {
             </p>
           </div>
 
-          {/* Host spec summary */}
+          {/* Host spec strip */}
           <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-muted/20 px-4 py-2.5 text-sm shrink-0">
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Memory</p>
@@ -154,6 +216,47 @@ export default function HostMeshPage() {
             </div>
           </div>
         </div>
+
+        {/* Provisioning panel */}
+        {provisioningStats && vms.length > 0 && (
+          <div className="rounded-xl border border-border/50 bg-card shadow-sm p-5 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">VM Resource Commitment</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{overallMeta.description}</p>
+              </div>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${overallMeta.badgeClass}`}>
+                {overallMeta.text}
+              </span>
+            </div>
+
+            <div className="flex gap-6">
+              <ResourceBar
+                label="Memory"
+                vmTotal={provisioningStats.vmMemTotal}
+                hostTotal={host.max_memory}
+                vmLabel={formatMemory(provisioningStats.vmMemTotal)}
+                hostLabel={formatMemory(host.max_memory)}
+              />
+              <div className="w-px bg-border/30 shrink-0" />
+              <ResourceBar
+                label="CPU Cores"
+                vmTotal={provisioningStats.vmCoresTotal}
+                hostTotal={host.max_cores}
+                vmLabel={`${provisioningStats.vmCoresTotal} vCPU`}
+                hostLabel={`${host.max_cores} cores`}
+              />
+              <div className="w-px bg-border/30 shrink-0" />
+              <ResourceBar
+                label="Storage"
+                vmTotal={provisioningStats.vmStorageTotal}
+                hostTotal={host.max_storage}
+                vmLabel={`${provisioningStats.vmStorageTotal}GB`}
+                hostLabel={`${host.max_storage}GB`}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Mesh */}
         <VmMesh

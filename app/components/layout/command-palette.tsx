@@ -182,8 +182,6 @@ export function CommandPalette() {
   const router = useRouter();
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
-  const zonesLoaded = useRef(false);
-
   // Open on Ctrl/Cmd+K or custom event from navbar
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -201,24 +199,25 @@ export function CommandPalette() {
     };
   }, []);
 
+  // Fetch zones on mount
+  useEffect(() => {
+    fetch("/api/zones", { cache: "no-store" })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.data)) {
+          setZones(data.data.map((z: any) => ({ kind: "zone" as const, ...z })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Close on navigation
   useEffect(() => { setOpen(false); }, [pathname]);
 
-  // Focus input + load zones on open; reset on close
+  // Focus input on open; reset on close
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 30);
-      if (!zonesLoaded.current) {
-        fetch("/api/zones", { cache: "no-store" })
-          .then(r => r.json())
-          .then(data => {
-            if (data.success && Array.isArray(data.data)) {
-              setZones(data.data.map((z: any) => ({ kind: "zone" as const, ...z })));
-              zonesLoaded.current = true;
-            }
-          })
-          .catch(() => {});
-      }
     } else {
       setQuery("");
       setCursor(0);

@@ -9,6 +9,7 @@ import {
   Calculator,
   Sparkles,
   Table2,
+  Search,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -186,6 +187,13 @@ export function Navbar() {
 
         <div className="flex items-center gap-1">
           <DocsDropdown />
+          <button
+            aria-label="Search"
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+            className="p-2 hover:bg-secondary/50 rounded-full transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <Search className="w-5 h-5" />
+          </button>
           <OnlineActivityIndicator />
           <ThemeToggle />
           <Dialog open={open} onOpenChange={setOpen}>

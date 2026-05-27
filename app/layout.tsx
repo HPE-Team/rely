@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 
 import { Toaster } from "sileo";
 import { Navbar } from "@/app/components/layout/navbar";
+import { CommandPalette } from "@/app/components/layout/command-palette";
 
 export const metadata: Metadata = {
   title: "PRI Dashboard",
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <Toaster position="bottom-right" />
         <Navbar />
+        <CommandPalette />
         <main className="flex-1">{children}</main>
         <footer className="mt-10">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">

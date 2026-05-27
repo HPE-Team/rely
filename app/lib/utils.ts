@@ -10,9 +10,9 @@ export function formatMemory(mb: number): string {
   return mb >= 1024 ? `${Math.round(mb / 1024)}GB` : `${mb}MB`;
 }
 
-const ZONE_CONFIG: Record<string, { name: string; logo: string }> = {
+const ZONE_CONFIG: Record<string, { name: string; logo: string; logoLight?: string }> = {
   "zone-a": { name: "Azure",        logo: "/zones/azure.png"        },
-  "zone-b": { name: "AWS",          logo: "/zones/aws.png"          },
+  "zone-b": { name: "AWS",          logo: "/zones/aws.png",          logoLight: "/zones/aws-light.png" },
   "zone-c": { name: "GCP",          logo: "/zones/gcp.png"          },
   "zone-d": { name: "DigitalOcean", logo: "/zones/digitalocean.png" },
   "zone-e": { name: "Cloudflare",   logo: "/zones/cloudflare.png"   },
@@ -37,4 +37,11 @@ export function formatZoneLabel(zoneId: string): string {
 /** Returns the public path to the zone's logo, or null for unknown zones. */
 export function getZoneLogo(zoneId: string): string | null {
   return ZONE_CONFIG[zoneId.trim().toLowerCase()]?.logo ?? null;
+}
+
+/** Returns the light-mode logo path, falling back to the default logo. */
+export function getZoneLogoLight(zoneId: string): string | null {
+  const cfg = ZONE_CONFIG[zoneId.trim().toLowerCase()];
+  if (!cfg) return null;
+  return cfg.logoLight ?? cfg.logo;
 }

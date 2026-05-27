@@ -25,6 +25,7 @@ import {
 } from "@/app/components/ui/dialog";
 import { MarkdownContent } from "@/app/how-we-calculate/markdown-content";
 import { sileo } from "sileo";
+import { toastFill } from "@/app/lib/toast-style";
 import { NODE_TYPES, STATUSES, ERROR_TYPES, POWER_STATES } from "@/app/lib/db/schema";
 
 /* ---------- types ---------- */
@@ -236,10 +237,10 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
       a.click();
       URL.revokeObjectURL(href);
 
-      sileo.success({ title: "CSV exported successfully", fill: "#171717" });
+      sileo.success({ title: "CSV exported successfully", fill: toastFill() });
     } catch (err) {
       console.error("CSV export failed:", err);
-      sileo.error({ title: "Export failed", fill: "#171717" });
+      sileo.error({ title: "Export failed", fill: toastFill() });
     } finally {
       setIsExporting(false);
     }
@@ -319,17 +320,17 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
         setItems((prev) =>
           prev.map((item) => (item.id === editTarget.id ? json.data : item)),
         );
-        sileo.success({ title: "Updated successfully", fill: "#171717" });
+        sileo.success({ title: "Updated successfully", fill: toastFill() });
         setEditTarget(null);
       } else {
         sileo.error({
           title: "Update failed",
           description: json.error || "Unknown error",
-          fill: "#171717",
+          fill: toastFill(),
         });
       }
     } catch {
-      sileo.error({ title: "Update failed", fill: "#171717" });
+      sileo.error({ title: "Update failed", fill: toastFill() });
     } finally {
       setIsSaving(false);
     }
@@ -350,17 +351,17 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
         setPagination((p) => ({ ...p, total: p.total - 1 }));
         sileo.success({
           title: `Server #${deleteTarget.id} deleted`,
-          fill: "#171717",
+          fill: toastFill(),
         });
       } else {
         sileo.error({
           title: "Delete failed",
           description: json.error,
-          fill: "#171717",
+          fill: toastFill(),
         });
       }
     } catch {
-      sileo.error({ title: "Delete failed", fill: "#171717" });
+      sileo.error({ title: "Delete failed", fill: toastFill() });
     } finally {
       setIsDeleting(false);
       setDeleteTarget(null);
@@ -376,7 +377,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
         <button
           onClick={() => setTab("table")}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${tab === "table"
-              ? "border-[#8ec5ff] text-[#8ec5ff]"
+              ? "border-brand text-brand"
               : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
         >
@@ -386,7 +387,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
         <button
           onClick={() => setTab("schema")}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px cursor-pointer ${tab === "schema"
-              ? "border-[#8ec5ff] text-[#8ec5ff]"
+              ? "border-brand text-brand"
               : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
         >
@@ -397,7 +398,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
 
       {/* Schema tab */}
       {tab === "schema" && (
-        <article className="rounded-xl border border-border/40 bg-[#111]/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
+        <article className="rounded-xl border border-border/40 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
           <MarkdownContent source={schemaSource} highlighted={{}} />
         </article>
       )}
@@ -406,14 +407,14 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
       {tab === "table" && (
         <>
           {/* Filter bar */}
-          <div className="flex flex-wrap items-center gap-3 mb-6 bg-[#0d0d0d] p-3 rounded-lg border border-border/40">
+          <div className="flex flex-wrap items-center gap-3 mb-6 bg-surface-1 p-3 rounded-lg border border-border/40">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">Zone</span>
               <div className="relative">
                 <select
                   value={zoneFilter}
                   onChange={(e) => setZoneFilter(e.target.value)}
-                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 cursor-pointer"
                 >
                   <option value="">All Zones</option>
                   {ZONES.map((z) => (
@@ -432,7 +433,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                  className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 cursor-pointer"
                 >
                   <option value="">All Types</option>
                   <option value="HOST">HOST</option>
@@ -449,7 +450,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                   <select
                     value={pagination.limit}
                     onChange={(e) => changePageSize(Number(e.target.value))}
-                    className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 cursor-pointer"
+                    className="appearance-none h-9 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 cursor-pointer"
                   >
                     {PAGE_SIZES.map((s) => (
                       <option key={s} value={s}>
@@ -488,7 +489,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                 </button>
 
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="p-1.5">
                       <button
                         onClick={() => { setMenuOpen(false); exportCsv(); }}
@@ -506,11 +507,11 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
           </div>
 
           {/* Table */}
-          <div className="rounded-xl border border-border/40 bg-[#111]/60 overflow-hidden shadow-2xl">
+          <div className="rounded-xl border border-border/40 bg-surface-2/60 overflow-hidden shadow-2xl">
             <div className="overflow-x-auto scrollbar-custom">
               <table className="w-full text-sm border-collapse min-w-[100rem]">
                 <thead>
-                  <tr className="border-b border-border/40 bg-[#0d0d0d]">
+                  <tr className="border-b border-border/40 bg-surface-1">
                     {COLUMNS.map((col) => (
                       <th
                         key={col.key}
@@ -529,7 +530,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                     <tr>
                       <td colSpan={COLUMNS.length + 1} className="text-center py-24">
                         <div className="flex flex-col items-center gap-3">
-                          <Loader2 className="w-6 h-6 animate-spin text-[#8ec5ff]" />
+                          <Loader2 className="w-6 h-6 animate-spin text-brand" />
                           <span className="text-xs text-muted-foreground font-medium">Fetching records...</span>
                         </div>
                       </td>
@@ -546,7 +547,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                     items.map((row) => (
                       <tr
                         key={row.id}
-                        className="hover:bg-[#1a1a1a] transition-colors group relative"
+                        className="hover:bg-surface-3 transition-colors group relative"
                       >
                         {COLUMNS.map((col) => (
                           <td key={col.key} className={`px-4 py-3.5 ${col.width}`}>
@@ -557,7 +558,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => startEdit(row)}
-                              className="p-1.5 rounded-md text-muted-foreground hover:text-[#8ec5ff] hover:bg-[#8ec5ff]/10 transition-all cursor-pointer"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-brand hover:bg-brand/10 transition-all cursor-pointer"
                               title="Edit record"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -578,7 +579,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-border/40 bg-[#0d0d0d]">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border/40 bg-surface-1">
               <div className="flex items-center gap-4">
                 <span className="text-xs font-medium text-muted-foreground">
                   Showing <span className="text-foreground">{pagination.offset + 1}</span> to{" "}
@@ -613,7 +614,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                         key={page}
                         onClick={() => goPage(page)}
                         className={`h-8 w-8 rounded-md text-xs font-mono font-medium transition-all cursor-pointer ${page === currentPage
-                            ? "bg-[#8ec5ff] text-background shadow-[0_0_15px_rgba(142,197,255,0.3)]"
+                            ? "bg-brand text-background shadow-[0_0_15px_rgba(142,197,255,0.3)]"
                             : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                           }`}
                       >
@@ -649,7 +650,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-[#8ec5ff]" />
+              <Edit2 className="w-5 h-5 text-brand" />
               Edit Server #{editTarget?.id}
             </DialogTitle>
             <DialogDescription>
@@ -675,7 +676,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                           const finalVal = val === "" && col.key === "error_type" ? null : val;
                           setEditValues(prev => ({ ...prev, [col.key]: finalVal }));
                         }}
-                        className="appearance-none w-full h-10 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 transition-all cursor-pointer"
+                        className="appearance-none w-full h-10 rounded-md border border-border/40 bg-background pl-3 pr-8 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 transition-all cursor-pointer"
                       >
                         {col.key === "error_type" && <option value="">None</option>}
                         {col.key === "node_type" && NODE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -690,7 +691,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
                       type="text"
                       value={String(editValues[col.key] ?? "")}
                       onChange={(e) => setEditValues(prev => ({ ...prev, [col.key]: e.target.value }))}
-                      className="w-full h-10 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-[#8ec5ff]/40 transition-all"
+                      className="w-full h-10 rounded-md border border-border/40 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand/40 transition-all"
                       placeholder={`Enter ${col.label.toLowerCase()}`}
                     />
                   )}
@@ -711,7 +712,7 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
             <Button
               onClick={saveEdit}
               disabled={isSaving}
-              className="bg-[#8ec5ff] text-background hover:bg-[#8ec5ff]/90 cursor-pointer"
+              className="bg-brand text-background hover:bg-brand/90 cursor-pointer"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

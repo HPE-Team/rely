@@ -13,6 +13,7 @@ import { Slider } from "@/app/components/ui/slider";
 import { Button } from "@/app/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { sileo } from "sileo";
+import { toastFill } from "@/app/lib/toast-style";
 
 type Section = ErrorPhase | "outliers" | "capacity-reliability" | "fleet-deviation" | "color";
 
@@ -58,7 +59,7 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
     onWeightsUpdate?.();
     sileo.success({
       title: "Configuration saved",
-      fill: "#171717",
+      fill: toastFill(),
       description: "PRI weights and thresholds updated.",
     });
   };
@@ -68,7 +69,7 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
     setConfig(DEFAULT_PRI_CONFIG);
     sileo.info({
       title: "Reset to defaults",
-      fill: "#171717",
+      fill: toastFill(),
       description: "All PRI configuration reset to default values.",
     });
   };

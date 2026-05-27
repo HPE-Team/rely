@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -96,7 +96,7 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
       targetHandle: "center",
       type: "straight" as const,
       style: {
-        stroke: "rgba(255,255,255,0.1)",
+        stroke: "color-mix(in oklch, var(--foreground) 15%, transparent)",
         strokeWidth: 1.5,
       },
       selectable: false,
@@ -104,6 +104,15 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
 
     return { defaultNodes: [hostNode, ...vmNodes], defaultEdges: edges };
   }, [host, vms, vmCount, failedVmCount]);
+
+  const [isDark, setIsDark] = useState(true);
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains("dark"));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   const handleNodeClick: NodeMouseHandler = (_, node) => {
     if (node.type === "vm") {
@@ -115,7 +124,7 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
 
   if (vms.length === 0) {
     return (
-      <div className="w-full h-[500px] rounded-xl border border-border/50 bg-[#141414] flex flex-col items-center justify-center gap-3">
+      <div className="w-full h-[500px] rounded-xl border border-border/50 bg-surface-1 flex flex-col items-center justify-center gap-3">
         <div className="w-10 h-10 rounded-full border-2 border-border/40 flex items-center justify-center">
           <span className="text-muted-foreground text-lg">○</span>
         </div>
@@ -125,7 +134,7 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
   }
 
   return (
-    <div className="w-full h-[680px] rounded-xl border border-border/50 overflow-hidden bg-[#111111]">
+    <div className="w-full h-[680px] rounded-xl border border-border/50 overflow-hidden bg-surface-2">
       <ReactFlow
         defaultNodes={defaultNodes}
         defaultEdges={defaultEdges}
@@ -133,7 +142,7 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
         onNodeClick={handleNodeClick}
         fitView
         fitViewOptions={{ padding: 0.12 }}
-        colorMode="dark"
+        colorMode={isDark ? "dark" : "light"}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={false}
@@ -147,11 +156,11 @@ export function VmMesh({ host, vms, vmCount, failedVmCount, onVmClick }: VmMeshP
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="rgba(255,255,255,0.04)"
+          color={isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)"}
         />
         <Controls
           showInteractive={false}
-          className="!bg-[#1a1a1a] !border-border/40 !rounded-lg overflow-hidden"
+          className="!bg-surface-3 !border-border/40 !rounded-lg overflow-hidden"
         />
       </ReactFlow>
     </div>

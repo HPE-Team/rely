@@ -138,12 +138,12 @@ export function ErrorDistributionChart({
             <ChartTooltip
               cursor={false}
               contentStyle={{
-                backgroundColor: "rgba(15, 23, 42, 0.95)",
-                border: "1px solid #334155",
+                backgroundColor: "var(--popover)",
+                border: "1px solid color-mix(in oklch, var(--border) 60%, transparent)",
                 borderRadius: "8px",
               }}
-              labelStyle={{ color: "#e2e8f0" }}
-              itemStyle={{ color: "#e2e8f0" }}
+              labelStyle={{ color: "var(--popover-foreground)" }}
+              itemStyle={{ color: "var(--muted-foreground)" }}
             />
             <Pie
               data={chartData}

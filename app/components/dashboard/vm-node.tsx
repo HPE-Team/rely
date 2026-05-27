@@ -20,7 +20,7 @@ export function VmNode({ data, selected }: NodeProps<VmNodeType>) {
 
   return (
     <div
-      className={`rounded-lg border bg-[#1a1a1a] shadow-md w-[172px] select-none cursor-pointer transition-colors ${
+      className={`rounded-lg border bg-surface-3 shadow-md w-[172px] select-none cursor-pointer transition-colors ${
         isFailed
           ? "border-red-500/40 hover:border-red-500/70"
           : "border-border/40 hover:border-green-500/50"

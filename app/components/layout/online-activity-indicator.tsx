@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sileo } from "sileo";
+import { toastFill } from "@/app/lib/toast-style";
 
 export function OnlineActivityIndicator() {
   const [hasServerResponse, setHasServerResponse] = useState(false);
@@ -48,7 +49,7 @@ export function OnlineActivityIndicator() {
   const handleClick = () => {
     sileo.success({
       title: "Server Activity",
-      fill: "#171717",
+      fill: toastFill(),
       description: hasServerResponse
         ? "If you are able to read this it means the server should be runnin!"
         : "Oh no, is it down :(",

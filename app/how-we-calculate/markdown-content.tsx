@@ -22,7 +22,7 @@ function CodeBlock({ raw, html }: { raw: string; html: string }) {
   };
   return (
     <div className="relative group my-5">
-      <pre className="rounded-lg border border-border/40 bg-[#0d0d0d] p-4 pr-12 overflow-x-auto text-sm leading-6 text-foreground">
+      <pre className="rounded-lg border border-border/40 bg-surface-1 p-4 pr-12 overflow-x-auto text-sm leading-6 text-foreground">
         <code
           className="font-mono text-sm"
           dangerouslySetInnerHTML={{ __html: html }}
@@ -55,7 +55,7 @@ function PlainCodeBlock({ raw, className }: { raw: string; className?: string })
   };
   return (
     <div className="relative group my-5">
-      <pre className="rounded-lg border border-border/40 bg-[#0d0d0d] p-4 pr-12 overflow-x-auto text-sm leading-6 text-foreground">
+      <pre className="rounded-lg border border-border/40 bg-surface-1 p-4 pr-12 overflow-x-auto text-sm leading-6 text-foreground">
         <code className={`font-mono text-sm ${className ?? ""}`}>{raw}</code>
       </pre>
       <button
@@ -110,7 +110,7 @@ function buildComponents(highlighted: Record<string, string>): Components {
   h3: ({ children }) => (
     <h3
       id={slugify(children)}
-      className="scroll-mt-24 text-xl font-semibold tracking-tight text-foreground mt-10 mb-3 pl-3 border-l-2 border-[#8ec5ff]/70"
+      className="scroll-mt-24 text-xl font-semibold tracking-tight text-foreground mt-10 mb-3 pl-3 border-l-2 border-brand/70"
     >
       {children}
     </h3>
@@ -133,7 +133,7 @@ function buildComponents(highlighted: Record<string, string>): Components {
     return (
       <a
         href={resolvedHref}
-        className="text-[#8ec5ff] underline underline-offset-2 decoration-[#8ec5ff]/40 hover:decoration-[#8ec5ff] transition-colors"
+        className="text-brand underline underline-offset-2 decoration-brand/40 hover:decoration-brand transition-colors"
       >
         {children}
       </a>
@@ -156,7 +156,7 @@ function buildComponents(highlighted: Record<string, string>): Components {
   em: ({ children }) => <em className="italic text-foreground/90">{children}</em>,
   hr: () => null,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-[#8ec5ff]/60 bg-[#8ec5ff]/5 pl-4 py-2 my-4 italic text-muted-foreground">
+    <blockquote className="border-l-2 border-brand/60 bg-brand/5 pl-4 py-2 my-4 italic text-muted-foreground">
       {children}
     </blockquote>
   ),

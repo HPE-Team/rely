@@ -7,8 +7,8 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
-import Image from "next/image";
-import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
+import { formatZoneLabel } from "@/app/lib/utils";
+import { ZoneLogo } from "@/app/components/zone-logo";
 import Link from "next/link";
 import type { ZoneColor } from "@/app/lib/calculations/pri";
 
@@ -24,17 +24,17 @@ interface ZoneOverviewProps {
 }
 
 const COLOR_PILL: Record<ZoneColor, string> = {
-  green: "bg-green-500/20 text-green-300",
-  amber: "bg-yellow-500/20 text-yellow-300",
-  red: "bg-red-500/20 text-red-300",
+  green: "bg-green-500/20 text-green-700 dark:text-green-300",
+  amber: "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300",
+  red: "bg-red-500/20 text-red-700 dark:text-red-300",
 };
 
 // Fallback for when color is not yet available
 const SCORE_PILL = (score: number) => {
-  if (score >= 90) return "bg-green-500/20 text-green-300";
-  if (score >= 75) return "bg-yellow-500/20 text-yellow-300";
-  if (score >= 50) return "bg-orange-500/20 text-orange-300";
-  return "bg-red-500/20 text-red-300";
+  if (score >= 90) return "bg-green-500/20 text-green-700 dark:text-green-300";
+  if (score >= 75) return "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300";
+  if (score >= 50) return "bg-orange-500/20 text-orange-700 dark:text-orange-300";
+  return "bg-red-500/20 text-red-700 dark:text-red-300";
 };
 
 export function ZoneOverviewCard({
@@ -48,7 +48,6 @@ export function ZoneOverviewCard({
   color,
 }: ZoneOverviewProps) {
   const pillClass = color ? COLOR_PILL[color] : SCORE_PILL(pri_score);
-  const logo = getZoneLogo(zone_id);
   const label = formatZoneLabel(zone_id);
 
   return (
@@ -58,15 +57,7 @@ export function ZoneOverviewCard({
           <div className="flex items-center justify-between">
             <CardTitle>
               <div className="flex items-center gap-2.5">
-                {logo && (
-                  <Image
-                    src={logo}
-                    alt={label}
-                    width={22}
-                    height={22}
-                    className="rounded object-contain shrink-0"
-                  />
-                )}
+                <ZoneLogo zoneId={zone_id} width={22} height={22} className="rounded object-contain shrink-0" />
                 <span className="font-sans">{label}</span>
               </div>
             </CardTitle>

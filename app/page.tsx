@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { chartTooltipStyle, chartLabelStyle, chartItemStyle } from "@/app/lib/chart-tooltip";
 import { ZoneOverviewCard } from "@/app/components/dashboard/zone-overview";
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
@@ -10,8 +11,8 @@ import {
   PRE_PROVISION_ERRORS,
   type ErrorType,
 } from "@/app/lib/constants/error-weights";
-import Image from "next/image";
-import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
+import { formatZoneLabel } from "@/app/lib/utils";
+import { ZoneLogo } from "@/app/components/zone-logo";
 import {
   Card,
   CardContent,
@@ -262,13 +263,9 @@ export default function Dashboard() {
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Tooltip
-                          contentStyle={{
-                            backgroundColor: "rgba(15, 23, 42, 0.95)",
-                            border: "1px solid #334155",
-                            borderRadius: "8px",
-                          }}
-                          labelStyle={{ color: "#e2e8f0" }}
-                          itemStyle={{ color: "#e2e8f0" }}
+                          contentStyle={chartTooltipStyle()}
+                          labelStyle={chartLabelStyle}
+                          itemStyle={chartItemStyle}
                         />
                         <Pie
                           data={nodeTypeSplit}
@@ -295,7 +292,7 @@ export default function Dashboard() {
                       return (
                         <div
                           key={entry.name}
-                          className="flex items-center justify-between rounded-lg border border-border/40 bg-[#1d1d1d] px-3 py-2"
+                          className="flex items-center justify-between rounded-lg border border-border/40 bg-surface-3 px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
                             <span
@@ -382,15 +379,14 @@ export default function Dashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
+                <div className="rounded-lg border border-border/40 bg-surface-3 p-4">
                   <p className="text-sm text-muted-foreground">
                     Highest Risk Zone
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    {aggregate.overview.highest_risk_zone && getZoneLogo(aggregate.overview.highest_risk_zone) && (
-                      <Image
-                        src={getZoneLogo(aggregate.overview.highest_risk_zone)!}
-                        alt={formatZoneLabel(aggregate.overview.highest_risk_zone)}
+                    {aggregate.overview.highest_risk_zone && (
+                      <ZoneLogo
+                        zoneId={aggregate.overview.highest_risk_zone}
                         width={24}
                         height={24}
                         className="rounded object-contain shrink-0"
@@ -403,7 +399,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
+                <div className="rounded-lg border border-border/40 bg-surface-3 p-4">
                   <p className="text-sm text-muted-foreground">
                     Host-Originated Errors
                   </p>
@@ -411,7 +407,7 @@ export default function Dashboard() {
                     {aggregate.errors.by_node_type.hosts}
                   </p>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-[#1d1d1d] p-4">
+                <div className="rounded-lg border border-border/40 bg-surface-3 p-4">
                   <p className="text-sm text-muted-foreground">
                     VM-Originated Errors
                   </p>

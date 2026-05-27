@@ -80,7 +80,7 @@ export function PRIBreakdownModal({
               return (
                 <div
                   key={c.label}
-                  className="rounded-md border border-border/30 bg-[#1d1d1d] px-3 py-2 space-y-1"
+                  className="rounded-md border border-border/30 bg-surface-3 px-3 py-2 space-y-1"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{c.label}</span>

@@ -96,11 +96,11 @@ export default async function HowWeCalculatePage() {
     <div className="bg-background">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
         <div className="mb-10">
-          <p className="text-xs uppercase tracking-[0.2em] font-mono text-[#8ec5ff] mb-3">
+          <p className="text-xs uppercase tracking-[0.2em] font-mono text-brand mb-3">
             PRI CALCULATION
           </p>
           <h1 className="text-5xl font-bold tracking-tight mb-3">
-            How we calculate PRI @ Rel<span className="text-[#8ec5ff]">y</span>
+            How we calculate PRI @ Rel<span className="text-brand">y</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl leading-relaxed">
             Deep dive into the Provisioning Reliability Index, the weights
@@ -109,7 +109,7 @@ export default async function HowWeCalculatePage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-10">
-          <article className="relative group rounded-xl border border-border/40 bg-[#111]/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
+          <article className="relative group rounded-xl border border-border/40 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10 min-w-0">
             <MarkdownContent source={source} highlighted={highlighted} />
 
             {/* Overlay control: keep it out of the markdown flow so "first:" heading styles still apply */}

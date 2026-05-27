@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { TrendingUp } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, XAxis } from "recharts";
 import { sileo } from "sileo";
+import { toastFill } from "@/app/lib/toast-style";
 import {
   Card,
   CardContent,
@@ -81,7 +82,7 @@ export function ErrorTimeline({
 
     sileo.info({
       title: "Error Classification Updated",
-      fill: "#171717",
+      fill: toastFill(),
       description: `Showing ${nextTotal} ${nextPhase.replace("-", " ")} errors.`,
     });
   };
@@ -163,12 +164,12 @@ export function ErrorTimeline({
                 cursor={false}
                 content={<ChartTooltipContent />}
                 contentStyle={{
-                  backgroundColor: "rgba(15, 23, 42, 0.95)",
-                  border: "1px solid #334155",
+                  backgroundColor: "var(--popover)",
+                  border: "1px solid color-mix(in oklch, var(--border) 60%, transparent)",
                   borderRadius: "8px",
                 }}
-                labelStyle={{ color: "#e2e8f0" }}
-                itemStyle={{ color: "#e2e8f0" }}
+                labelStyle={{ color: "var(--popover-foreground)" }}
+                itemStyle={{ color: "var(--muted-foreground)" }}
               />
               <Bar dataKey="count" radius={8}>
                 {chartData.map((entry, index) => (

@@ -30,8 +30,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
-        "dark",
         "h-full",
         "antialiased",
         geistMono.variable,
@@ -39,6 +39,13 @@ export default function RootLayout({
         spaceGrotesk.variable,
       )}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <Toaster position="bottom-right" />
         <Navbar />

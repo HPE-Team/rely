@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
+import { ZoneLogo } from "@/app/components/zone-logo";
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { getErrorTypeLabel, PRE_PROVISION_ERRORS } from "@/app/lib/constants/error-weights";
-import { formatZoneLabel, getZoneLogo } from "@/app/lib/utils";
+import { formatZoneLabel } from "@/app/lib/utils";
 
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
@@ -261,18 +261,7 @@ export default function ZonePage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-sans text-4xl font-bold mb-2 flex items-center gap-3">
-              {(() => {
-                const logo = getZoneLogo(zoneDetail.zone_id);
-                return logo ? (
-                  <Image
-                    src={logo}
-                    alt={formatZoneLabel(zoneDetail.zone_id)}
-                    width={36}
-                    height={36}
-                    className="rounded-lg object-contain shrink-0"
-                  />
-                ) : null;
-              })()}
+              <ZoneLogo zoneId={zoneDetail.zone_id} width={36} height={36} className="rounded-lg object-contain shrink-0" />
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -400,7 +389,7 @@ export default function ZonePage() {
                           {zoneDetail.overall.outlier_servers.map((s) => (
                             <div
                               key={s.id}
-                              className="rounded-md bg-[#1d1d1d] border border-border/40 px-2.5 py-1.5 space-y-1"
+                              className="rounded-md bg-surface-3 border border-border/40 px-2.5 py-1.5 space-y-1"
                             >
                               <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-x-2 items-center">
                                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
@@ -462,19 +451,19 @@ export default function ZonePage() {
                       Zone PRI is below the fleet baseline — a penalty was applied.
                     </p>
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
                         <p className="text-[10px] text-muted-foreground mb-0.5">Fleet PRI</p>
                         <p className="font-mono text-sm font-semibold">
                           {zoneDetail.overall.fleet_pri_score.toFixed(1)}
                         </p>
                       </div>
-                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
                         <p className="text-[10px] text-muted-foreground mb-0.5">Zone PRI</p>
                         <p className="font-mono text-sm font-semibold">
                           {zoneDetail.overall.pri_score.toFixed(1)}
                         </p>
                       </div>
-                      <div className="rounded bg-[#1d1d1d] border border-border/40 px-2.5 py-2 text-center">
+                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
                         <p className="text-[10px] text-muted-foreground mb-0.5">Deducted</p>
                         <p className="font-mono text-sm font-semibold text-red-400">
                           −{zoneDetail.overall.fleet_deviation_penalty.toFixed(2)}
@@ -729,7 +718,7 @@ export default function ZonePage() {
                   By Node Type
                 </p>
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-surface-3 border border-border/40">
                     <span className="text-sm text-muted-foreground font-medium">
                       ESX Hosts
                     </span>
@@ -737,7 +726,7 @@ export default function ZonePage() {
                       {zoneDetail.errors.by_node_type.hosts}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-surface-3 border border-border/40">
                     <span className="text-sm text-muted-foreground font-medium">
                       Virtual Machines
                     </span>
@@ -758,7 +747,7 @@ export default function ZonePage() {
                     .map((e) => (
                       <div
                         key={e.type}
-                        className="flex items-center justify-between p-4 rounded-lg bg-[#1d1d1d] border border-border/40"
+                        className="flex items-center justify-between p-4 rounded-lg bg-surface-3 border border-border/40"
                       >
                         <span className="text-sm text-muted-foreground font-medium">
                           {getErrorTypeLabel(e.type as any)}

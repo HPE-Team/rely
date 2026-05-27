@@ -51,7 +51,7 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
                   ${item.depth === 2 ? "pl-3" : "pl-6 text-[13px]"}
                   ${
                     active
-                      ? "border-[#8ec5ff] text-[#8ec5ff]"
+                      ? "border-brand text-brand"
                       : "border-transparent text-muted-foreground hover:text-foreground"
                   }
                 `}

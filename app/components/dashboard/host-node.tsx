@@ -22,7 +22,7 @@ export function HostNode({ data }: NodeProps<HostNodeType>) {
 
   return (
     <div
-      className={`rounded-xl border-2 bg-[#171717] shadow-2xl w-[220px] select-none ${
+      className={`rounded-xl border-2 bg-surface-2 shadow-2xl w-[220px] select-none ${
         isHealthy
           ? "border-green-500/50 shadow-green-500/5"
           : "border-red-500/50 shadow-red-500/5"

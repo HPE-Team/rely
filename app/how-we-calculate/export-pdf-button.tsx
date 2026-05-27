@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { sileo } from "sileo";
+import { toastFill } from "@/app/lib/toast-style";
 
 export function ExportPdfButton({
   markdown,
@@ -39,10 +40,10 @@ export function ExportPdfButton({
     try {
       await navigator.clipboard.writeText(markdown);
       setIsCopied(true);
-      sileo.success({ title: "Markdown copied to clipboard", fill: "#171717" });
+      sileo.success({ title: "Markdown copied to clipboard", fill: toastFill() });
       setTimeout(() => setIsCopied(false), 2000);
     } catch {
-      sileo.error({ title: "Failed to copy markdown", fill: "#171717" });
+      sileo.error({ title: "Failed to copy markdown", fill: toastFill() });
     }
     setIsOpen(false);
   };
@@ -58,9 +59,9 @@ export function ExportPdfButton({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      sileo.success({ title: "Markdown file downloaded", fill: "#171717" });
+      sileo.success({ title: "Markdown file downloaded", fill: toastFill() });
     } catch {
-      sileo.error({ title: "Failed to download markdown", fill: "#171717" });
+      sileo.error({ title: "Failed to download markdown", fill: toastFill() });
     }
     setIsOpen(false);
   };
@@ -118,7 +119,7 @@ export function ExportPdfButton({
     } catch (e: unknown) {
       sileo.error({
         title: "PDF export failed",
-        fill: "#171717",
+        fill: toastFill(),
         description: e instanceof Error ? e.message : "Unexpected error",
       });
     } finally {
@@ -149,7 +150,7 @@ export function ExportPdfButton({
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute right-0 top-full mt-2 w-56 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
           <div className="p-1.5 space-y-0.5">
             <button
               onClick={copyMarkdown}

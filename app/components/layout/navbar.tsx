@@ -21,6 +21,7 @@ import {
 } from "@/app/components/ui/dialog";
 import { WeightConfig } from "@/app/components/dashboard/weight-config";
 import { OnlineActivityIndicator } from "@/app/components/layout/online-activity-indicator";
+import { ThemeToggle } from "@/app/components/layout/theme-toggle";
 
 const DOCS_LINKS = [
   {
@@ -46,6 +47,15 @@ const DOCS_LINKS = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const update = () => setIsDark(document.documentElement.classList.contains("dark"));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
   const docsDesktopRef = useRef<HTMLDivElement>(null);
   const docsMobileRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -79,9 +89,9 @@ export function Navbar() {
             className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
             href="/"
           >
-            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
+            <Image src={isDark ? "/logo.svg" : "/logo-light.svg"} alt="Logo" width={32} height={32} />
             <h1 className="text-2xl font-bold tracking-tight">
-              Rel<span className="text-[#8ec5ff]">y</span>
+              Rel<span className="text-brand">y</span>
             </h1>
           </Link>
         </div>
@@ -103,7 +113,7 @@ export function Navbar() {
               />
             </button>
 
-            <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+            <div className={`absolute right-0 top-full mt-2 w-72 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
               docsOpen
                 ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
                 : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
@@ -117,7 +127,7 @@ export function Navbar() {
                       key={link.href}
                       href={link.href}
                       className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${active
-                        ? "bg-[#8ec5ff]/10 text-[#8ec5ff]"
+                        ? "bg-brand/10 text-brand"
                         : "text-foreground hover:bg-secondary/50"
                         }`}
                     >
@@ -145,7 +155,7 @@ export function Navbar() {
               <BookOpen className="w-5 h-5" />
             </button>
 
-            <div className={`absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-[#111] shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
+            <div className={`absolute right-0 top-full mt-2 w-64 rounded-xl border border-border/40 bg-surface-2 shadow-2xl shadow-black/40 overflow-hidden z-50 transition-all duration-200 ease-out origin-top-right ${
               docsOpen
                 ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
                 : "opacity-0 scale-95 -translate-y-1 pointer-events-none"
@@ -169,6 +179,7 @@ export function Navbar() {
           </div>
 
           <OnlineActivityIndicator />
+          <ThemeToggle />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <button className="p-2 hover:bg-secondary/50 rounded-full transition-colors cursor-pointer text-muted-foreground hover:text-foreground">

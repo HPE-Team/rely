@@ -361,7 +361,8 @@ layout: default
         <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Fleet Deviation</div>
       </div>
       <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Fleet-relative grading</div>
-      <div style="color:#777;font-size:11.5px;line-height:1.55">Score a zone against the fleet-wide baseline. Lagging zones are penalized relative to peers, not just in isolation.</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Alam introduces parameter α > 1 to ensure VMs are distributed across different servers rather than concentrated on one. His experiments show reliability at 67% when α = 1 — no distribution priority. Increasing α pushed it to 88%, proving that placement must be measured against peers, not just in isolation. Fleet deviation applies this directly: lagging zones are penalised relative to the fleet baseline, not just scored on their own numbers.</div>
+      <div style="font-family:'Geist Mono',monospace;font-size:9px;color:#3e3e3e;border-top:1px solid rgba(255,255,255,0.06);padding-top:7px;margin-top:auto">Section 4.2, p.50–51 · Fig. 4.12–4.14, p.67–69</div>
     </div>
     <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -369,28 +370,227 @@ layout: default
         <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Capacity Reliability</div>
       </div>
       <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Nonlinear capacity score</div>
-      <div style="color:#777;font-size:11.5px;line-height:1.55">Model host utilization as a predictive risk via nonlinear decay — not a linear percentage. Catches overcommit before it becomes failure.</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Alam's capacity constraint [Eq. 4.12] proves reliability degrades when resource allocation approaches its ceiling, and his multiplicative formula [Eq. 4.2] means any saturated resource collapses the total score. The thesis establishes why the penalty should be sharp, not linear. Our score(u) = 1/(1+u²) gives that shape — a host at 50% scores 0.80, fully committed drops to 0.50, overcommit hits 0.31. CPU and memory weighted at 0.40 each; storage at 0.20 reflects decoupled SAN architecture.</div>
+      <div style="font-family:'Geist Mono',monospace;font-size:9px;color:#3e3e3e;border-top:1px solid rgba(255,255,255,0.06);padding-top:7px;margin-top:auto">Eq. 4.2, p.47 · Eq. 4.12, p.55 · Section 4.1</div>
     </div>
     <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">Term 4</div>
-        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Outlier Detection</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">Term 3</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Error Severity</div>
       </div>
-      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Dynamic Tukey fences</div>
-      <div style="color:#777;font-size:11.5px;line-height:1.55">Per-VM outlier thresholds scaled by resource footprint. Larger VMs get wider fences — no false positives from legitimate size differences.</div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Weighted error taxonomy</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Alam classifies cloud failures into distinct categories — hardware, software, network, overflow, timeout, resource allocation — and models each separately because their impacts are fundamentally different. The thesis states these failures "may occur individually, concurrently, or one can be the cause of one or more other failures." Our weights implement this: hardware and power sit at 1.0 — infrastructure-level, non-self-healing, cascade to dependent VMs. Resource failures sit at 0.3 — recoverable and non-cascading.</div>
+      <div style="font-family:'Geist Mono',monospace;font-size:9px;color:#3e3e3e;border-top:1px solid rgba(255,255,255,0.06);padding-top:7px;margin-top:auto">Section 3.1.1, p.32–33 · Section 3.2, p.34–38 · Eq. 3.6</div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:auto">
     <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 15px">
       <div style="font-size:9px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#484848;margin-bottom:6px">Designed from first principles</div>
-      <div style="color:#666;font-size:12px;line-height:1.55">Success rate, stability, error severity — built from scratch against HPE's error classification and provisioning data. No prior art applied.</div>
+      <div style="color:#666;font-size:12px;line-height:1.55">Success rate, stability, outlier detection — built from scratch against HPE's error classification and provisioning data. No prior art applied.</div>
     </div>
     <div class="insight" style="margin-top:0">
       Research provided <strong>three useful starting points</strong>. The derivation, tuning, and adaptation to provisioning data was our own work.
     </div>
   </div>
 
+</div>
+
+---
+layout: default
+---
+
+<style>
+  .wrap { display:flex; flex-direction:column; gap:14px; padding:1rem 0; font-family:var(--font-sans); }
+  h1 { margin:0; font-size:22px; font-weight:500; color:var(--color-text-primary); }
+  .sub { color:var(--color-text-secondary); font-size:13px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; }
+  .leg-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--color-text-secondary); font-family:var(--font-mono); }
+  .leg-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+</style>
+
+<div class="wrap">
+  <h2 class="sr-only">VPRI variable redundancy diagram — shows which dataset columns map to multiple formula components in Alam's model, causing double-counting and structural mismatch problems</h2>
+
+  <h1>Why direct mapping broke down</h1>
+  <p class="sub">Columns in the dataset mapped to multiple formula components simultaneously — the same variable doing two different jobs, or being forced into a role it was never designed for.</p>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#EF9F27"></div>redundant — same column, multiple components</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#E24B4A"></div>structural mismatch — column type / schema doesn't fit</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#639922"></div>clean mapping</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#888780"></div>absent from dataset</div>
+  </div>
+
+<svg width="100%" viewBox="0 0 680 620" role="img">
+  <title>VPRI redundancy diagram</title>
+  <desc>Dataset columns on the left connect via lines to formula components on the right. Amber lines show columns used in multiple components. Red lines show structural mismatches. Green lines show clean mappings. Gray dashed lines show absent columns.</desc>
+  <defs>
+    <marker id="arr-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#639922" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-x" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+
+  <!-- ── COLUMN HEADER ── -->
+  <text class="ts" x="112" y="22" text-anchor="middle" fill="#888780">Dataset columns</text>
+  <!-- ── FORMULA HEADER ── -->
+  <text class="ts" x="548" y="22" text-anchor="middle" fill="#888780">Formula components</text>
+
+  <!-- ═══════ COLUMNS (left side) x=40..184, w=144 ═══════ -->
+
+  <!-- status -->
+  <g class="c-green"><rect x="40" y="36" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="54" text-anchor="middle" dominant-baseline="central">status</text></g>
+
+  <!-- status_percent -->
+  <g class="c-red"><rect x="40" y="86" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="104" text-anchor="middle" dominant-baseline="central">status_percent</text></g>
+
+  <!-- provision_percent -->
+  <g class="c-green"><rect x="40" y="136" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="154" text-anchor="middle" dominant-baseline="central">provision_percent</text></g>
+
+  <!-- error_message -->
+  <g class="c-green"><rect x="40" y="186" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="204" text-anchor="middle" dominant-baseline="central">error_message</text></g>
+
+  <!-- provision_time -->
+  <g class="c-amber"><rect x="40" y="236" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="254" text-anchor="middle" dominant-baseline="central">provision_time</text></g>
+
+  <!-- status_eta -->
+  <g class="c-gray"><rect x="40" y="286" width="144" height="36" rx="6" stroke-width="0.5" stroke-dasharray="4 3"/><text class="th" x="112" y="304" text-anchor="middle" dominant-baseline="central">status_eta</text></g>
+  <text class="ts" x="40" y="332" fill="#888780">absent — derived from p95</text>
+
+  <!-- max_memory -->
+  <g class="c-amber"><rect x="40" y="346" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="364" text-anchor="middle" dominant-baseline="central">max_memory</text></g>
+
+  <!-- max_cores -->
+  <g class="c-amber"><rect x="40" y="396" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="414" text-anchor="middle" dominant-baseline="central">max_cores</text></g>
+
+  <!-- max_storage -->
+  <g class="c-amber"><rect x="40" y="446" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="464" text-anchor="middle" dominant-baseline="central">max_storage</text></g>
+
+  <!-- power_state -->
+  <g class="c-green"><rect x="40" y="496" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="514" text-anchor="middle" dominant-baseline="central">power_state</text></g>
+
+  <!-- zone_id -->
+  <g class="c-red"><rect x="40" y="546" width="144" height="36" rx="6" stroke-width="0.5"/><text class="th" x="112" y="564" text-anchor="middle" dominant-baseline="central">zone_id</text></g>
+
+  <!-- ═══════ FORMULA COMPONENTS (right side) x=456..636, w=180 ═══════ -->
+
+  <!-- R_OF -->
+  <g class="c-red"><rect x="456" y="36" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="54" text-anchor="middle" dominant-baseline="central">R_OF — overflow</text></g>
+
+  <!-- R_TF -->
+  <g class="c-amber"><rect x="456" y="86" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="104" text-anchor="middle" dominant-baseline="central">R_TF — timeout</text></g>
+
+  <!-- R_RAF -->
+  <g class="c-green"><rect x="456" y="136" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="154" text-anchor="middle" dominant-baseline="central">R_RAF — allocation</text></g>
+
+  <!-- R_HF -->
+  <g class="c-amber"><rect x="456" y="236" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="254" text-anchor="middle" dominant-baseline="central">R_HF — hardware</text></g>
+
+  <!-- R_SF -->
+  <g class="c-green"><rect x="456" y="286" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="304" text-anchor="middle" dominant-baseline="central">R_SF — software</text></g>
+
+  <!-- R_NF -->
+  <g class="c-amber"><rect x="456" y="336" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="354" text-anchor="middle" dominant-baseline="central">R_NF — network</text></g>
+
+  <!-- LatencyScore -->
+  <g class="c-amber"><rect x="456" y="436" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="454" text-anchor="middle" dominant-baseline="central">LatencyScore</text></g>
+
+  <!-- ResourceScore -->
+  <g class="c-amber"><rect x="456" y="486" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="504" text-anchor="middle" dominant-baseline="central">ResourceScore</text></g>
+
+  <!-- ZoneBonus -->
+  <g class="c-red"><rect x="456" y="536" width="180" height="36" rx="6" stroke-width="0.5"/><text class="th" x="546" y="554" text-anchor="middle" dominant-baseline="central">ZoneBonus (α)</text></g>
+
+  <!-- ═══════ CONNECTORS ═══════ -->
+
+  <!-- status → R_SF (clean green) -->
+  <path d="M184 54 L240 54 L240 304 L456 304" fill="none" stroke="#639922" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+  <!-- status_percent → R_OF (red — text type forced into overflow proxy) -->
+  <path d="M184 104 L456 54" fill="none" stroke="#E24B4A" stroke-width="1.2" marker-end="url(#arr-r)"/>
+
+  <!-- provision_percent → R_RAF (clean green) -->
+  <path d="M184 154 L456 154" fill="none" stroke="#639922" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+  <!-- error_message → R_SF (clean green) -->
+  <path d="M184 204 L240 204 L240 316 L456 316" fill="none" stroke="#639922" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+  <!-- provision_time → R_TF (amber — redundant) -->
+  <path d="M184 254 L320 254 L320 104 L456 104" fill="none" stroke="#EF9F27" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+  <!-- provision_time → LatencyScore (amber — same column, second penalty for same thing) -->
+  <path d="M184 258 L320 258 L320 454 L456 454" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-a)"/>
+
+  <!-- status_eta → R_TF (gray dashed — absent) -->
+  <path d="M184 304 L350 304 L350 116 L456 116" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr-x)"/>
+
+  <!-- status_eta → LatencyScore (gray dashed — absent) -->
+  <path d="M184 308 L356 308 L356 464 L456 464" fill="none" stroke="#888780" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#arr-x)"/>
+
+  <!-- max_memory → R_HF (amber — bigint not a ratio) -->
+  <path d="M184 364 L330 364 L330 254 L456 254" fill="none" stroke="#EF9F27" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+  <!-- max_memory → ResourceScore (amber — same column, second use) -->
+  <path d="M184 368 L334 368 L334 504 L456 504" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-a)"/>
+
+  <!-- max_cores → R_HF (amber) -->
+  <path d="M184 414 L336 414 L336 264 L456 264" fill="none" stroke="#EF9F27" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+  <!-- max_cores → ResourceScore (amber dashed — redundant) -->
+  <path d="M184 418 L340 418 L340 514 L456 514" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-a)"/>
+
+  <!-- max_storage → R_NF (amber — bigint not a ratio) -->
+  <path d="M184 464 L360 464 L360 354 L456 354" fill="none" stroke="#EF9F27" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+  <!-- max_storage → ResourceScore (amber dashed — redundant) -->
+  <path d="M184 468 L364 468 L364 524 L456 524" fill="none" stroke="#EF9F27" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arr-a)"/>
+
+  <!-- power_state → R_HF (clean green) -->
+  <path d="M184 514 L420 514 L420 262 L456 262" fill="none" stroke="#639922" stroke-width="1.2" marker-end="url(#arr-g)"/>
+
+  <!-- zone_id → ZoneBonus (red — single int, can't derive alpha across VMs) -->
+  <path d="M184 564 L456 554" fill="none" stroke="#E24B4A" stroke-width="1.2" marker-end="url(#arr-r)"/>
+
+  <!-- ── CALLOUT LABELS on key redundancy points ── -->
+  <!-- provision_time dual-use callout -->
+  <rect x="228" y="382" width="124" height="40" rx="4" fill="none" stroke="#EF9F27" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text class="ts" x="290" y="397" text-anchor="middle" fill="#BA7517">double penalty</text>
+  <text class="ts" x="290" y="412" text-anchor="middle" fill="#BA7517">same column</text>
+
+  <!-- resource triple-use callout -->
+  <rect x="228" y="476" width="124" height="40" rx="4" fill="none" stroke="#EF9F27" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text class="ts" x="290" y="491" text-anchor="middle" fill="#BA7517">raw bytes — not</text>
+  <text class="ts" x="290" y="506" text-anchor="middle" fill="#BA7517">a utilisation ratio</text>
+
+  <!-- zone_id callout -->
+  <rect x="228" y="552" width="130" height="28" rx="4" fill="none" stroke="#E24B4A" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text class="ts" x="293" y="570" text-anchor="middle" fill="#A32D2D">needs multi-VM context</text>
+
+  <!-- status_percent callout -->
+  <rect x="228" y="64" width="124" height="28" rx="4" fill="none" stroke="#E24B4A" stroke-width="0.5" stroke-dasharray="3 2"/>
+  <text class="ts" x="290" y="82" text-anchor="middle" fill="#A32D2D">text — not N_req</text>
+
+  <!-- stage labels -->
+  <text class="ts" x="546" y="198" text-anchor="middle" fill="#888780">── Stage 1: RPR ──</text>
+  <text class="ts" x="546" y="418" text-anchor="middle" fill="#888780">── Stage 2: ER ──</text>
+
+</svg>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px">
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--color-text-warning);margin-bottom:5px">Double penalty</div>
+      <div style="font-size:11.5px;color:var(--color-text-secondary);line-height:1.5">provision_time fed both R_TF and LatencyScore — the same overrun penalised twice in the same formula.</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--color-text-warning);margin-bottom:5px">Triple use</div>
+      <div style="font-size:11.5px;color:var(--color-text-secondary);line-height:1.5">max_memory, max_cores, max_storage each appeared in two components — R_HF and ResourceScore — as raw bytes instead of normalised ratios.</div>
+    </div>
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--font-mono);color:var(--color-text-danger);margin-bottom:5px">Schema mismatch</div>
+      <div style="font-size:11.5px;color:var(--color-text-secondary);line-height:1.5">status_percent is text, not N_req. zone_id is a single integer per row — Alam's α needs a set of VMs across one request. status_eta doesn't exist.</div>
+    </div>
+  </div>
 </div>
 
 ---

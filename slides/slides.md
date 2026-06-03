@@ -597,6 +597,87 @@ layout: default
 layout: default
 ---
 
+<div style="display:flex;flex-direction:column;gap:14px;height:100%">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+    <h1 style="margin:0">Our Contributions</h1>
+    <div style="font-size:9.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">Built from scratch · HPE provisioning data</div>
+  </div>
+
+  <div style="background:#202020;border:1px solid rgba(255,255,255,0.09);border-left:3px solid #4060D0;border-radius:8px;padding:14px 18px">
+    <div style="color:#a8a8a8;font-size:11.5px;line-height:1.6">The research paper provided three starting points. Everything below was designed independently — no prior art applied. Each decision was made against HPE's error classification, provisioning data, and operational requirements.</div>
+  </div>
+
+  <div style="font-size:9.5px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;color:#444;font-family:'Geist Mono',monospace">Six original design decisions</div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;flex:1">
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;   padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">01</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Formula structure</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Deduction from 100</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Starts at 100, loses points for named reasons. A perfect pool costs nothing to explain — it just stayed at 100. Every point lost has a label: success loss, stability loss, error loss. An operator can read the breakdown without understanding the formula.</div>
+    </div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">02</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Term 1</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Success rate at 0.80</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">4× the weight of every other term. One failed provision is always the loudest signal regardless of how consistent timing is. A pool cannot score above 20 if nothing is provisioning. The weight reflects a deliberate priority: fix failures first, optimise everything else second.</div>
+    </div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">03</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Term 2</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Stability via CV</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Timing variance as a reliability signal, not just a performance metric. A pool at 100% success rate with wildly inconsistent provision times is showing an early warning sign. CV is relative — a 30s deviation means something different in a 60s pool vs a 600s pool. Raw stddev would not catch this.</div>
+    </div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">04</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Term 4</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Resource-aware outlier detection</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Standard Tukey uses k = 1.5 for every VM. A 256GB VM legitimately takes longer than a 4GB VM — a fixed fence creates false positives. k_i scales proportionally to VM size: k_i = clamp(1.5 + α × (vm.size / med.size − 1), 0.5, 4.0). Only genuine stragglers relative to their size-peer group are penalised.</div>
+    </div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">05</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Cascade deduplication</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">One ESX failure = one incident</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">When an ESX host fails, all its VMs fail too. Without dedup, one host outage in a 40-VM pool counts as 41 failures and destroys the score. We attribute the failure to the host only — cascaded VMs are surfaced separately in the UI but do not subtract from PRI. The score stays meaningful.</div>
+    </div>
+    <div style="background:#282828;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:14px 15px;display:flex;flex-direction:column;gap:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#4060D0">06</div>
+        <div style="font-size:9px;color:#3e3e3e;font-family:'Geist Mono',monospace">Colour system</div>
+      </div>
+      <div style="color:#fff;font-size:12.5px;font-weight:600;line-height:1.25">Green / amber / red orthogonal to PRI</div>
+      <div style="color:#777;font-size:11.5px;line-height:1.55">Two zones with PRI 82 can be green and red. The colour catches what the number hides — a pool where 65% of errors are critical hardware failures is red regardless of score. Three inputs: PRI value, critical error ratio, ESX fail share. All thresholds configurable live without a code change.</div>
+    </div>
+
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:auto">
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:12px 15px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;font-family:'Geist Mono',monospace;color:#484848;margin-bottom:6px">Weights are configurable</div>
+      <div style="color:#666;font-size:12px;line-height:1.55">Every weight, threshold, and error severity value is tunable live via the settings panel. No code change needed to adjust operational priority.</div>
+    </div>
+    <div class="insight" style="margin-top:0">
+      The paper told us <strong>why</strong> certain things matter. These six decisions defined <strong>how</strong> to measure them against real infrastructure data.
+    </div>
+  </div>
+
+</div>
+
+---
+layout: default
+---
+
 
 # PRI Formula
 

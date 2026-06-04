@@ -410,21 +410,9 @@ layout: default
 </style>
 
 <div class="wrap">
-  <h2 class="sr-only">VPRI variable redundancy diagram — shows which dataset columns map to multiple formula components in Alam's model, causing double-counting and structural mismatch problems</h2>
-
-  <h1>Why direct mapping broke down</h1>
-  <p class="sub">Columns in the dataset mapped to multiple formula components simultaneously — the same variable doing two different jobs, or being forced into a role it was never designed for.</p>
-
-  <div class="legend">
-    <div class="leg-item"><div class="leg-dot" style="background:#EF9F27"></div>redundant — same column, multiple components</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#E24B4A"></div>structural mismatch — column type / schema doesn't fit</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#639922"></div>clean mapping</div>
-    <div class="leg-item"><div class="leg-dot" style="background:#888780"></div>absent from dataset</div>
-  </div>
-
   <div style="display:flex; justify-content:center; margin-top:1rem;">
     <img
-      src="/images/vpri_redundancy.png"
+      src="/images/vpri_redundancy_2.png"
       alt="VPRI redundancy mapping diagram"
       style="
         width:100%;

@@ -14,7 +14,10 @@ import {
 } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { getErrorTypeLabel, PRE_PROVISION_ERRORS } from "@/app/lib/constants/error-weights";
+import {
+  getErrorTypeLabel,
+  PRE_PROVISION_ERRORS,
+} from "@/app/lib/constants/error-weights";
 import { formatZoneLabel } from "@/app/lib/utils";
 
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
@@ -36,7 +39,12 @@ interface ZoneDetail {
     failure_rate: number;
     avg_provision_time: number;
     median_provision_time: number;
-    provision_percentiles?: { p50: number; p75: number; p95: number; p99: number };
+    provision_percentiles?: {
+      p50: number;
+      p75: number;
+      p95: number;
+      p99: number;
+    };
     stability_score: number;
     total_servers: number;
     successful_servers: number;
@@ -252,15 +260,22 @@ export default function ZonePage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-        <AppBreadcrumb items={[
-          { label: "Dashboard", href: "/" },
-          { label: formatZoneLabel(zoneDetail.zone_id) },
-        ]} />
+        <AppBreadcrumb
+          items={[
+            { label: "Dashboard", href: "/" },
+            { label: formatZoneLabel(zoneDetail.zone_id) },
+          ]}
+        />
 
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-sans text-4xl font-bold mb-2 flex items-center gap-3">
-              <ZoneLogo zoneId={zoneDetail.zone_id} width={36} height={36} className="rounded-lg object-contain shrink-0" />
+              <ZoneLogo
+                zoneId={zoneDetail.zone_id}
+                width={36}
+                height={36}
+                className="object-contain shrink-0"
+              />
               {formatZoneLabel(zoneDetail.zone_id)}
             </h1>
             <p className="text-lg text-muted-foreground">
@@ -359,10 +374,18 @@ export default function ZonePage() {
                 {zoneDetail.overall.provision_percentiles && (
                   <div className="grid grid-cols-4 gap-2">
                     {(["p50", "p75", "p95", "p99"] as const).map((p) => (
-                      <div key={p} className="rounded-lg bg-muted/40 border border-border/40 p-2.5 text-center">
-                        <p className="text-[10px] text-muted-foreground mb-1 uppercase font-semibold">{p.toUpperCase()}</p>
+                      <div
+                        key={p}
+                        className="rounded-lg bg-muted/40 border border-border/40 p-2.5 text-center"
+                      >
+                        <p className="text-[10px] text-muted-foreground mb-1 uppercase font-semibold">
+                          {p.toUpperCase()}
+                        </p>
                         <p className="text-sm font-bold font-mono">
-                          {zoneDetail.overall.provision_percentiles![p].toFixed(1)}s
+                          {zoneDetail.overall.provision_percentiles![p].toFixed(
+                            1,
+                          )}
+                          s
                         </p>
                       </div>
                     ))}
@@ -379,9 +402,13 @@ export default function ZonePage() {
                       provisions exceeded their dynamic fence
                       {zoneDetail.overall.outlier_default_fence != null && (
                         <>
-                          {" "}(median fence{" "}
+                          {" "}
+                          (median fence{" "}
                           <span className="font-mono font-semibold">
-                            {zoneDetail.overall.outlier_default_fence.toFixed(0)}s
+                            {zoneDetail.overall.outlier_default_fence.toFixed(
+                              0,
+                            )}
+                            s
                           </span>
                           )
                         </>
@@ -424,14 +451,21 @@ export default function ZonePage() {
                                   {s.k != null ? s.k.toFixed(2) : "1.50"}
                                 </span>
                                 <span className="font-mono text-xs text-muted-foreground text-right">
-                                  {s.fence != null ? `${s.fence.toFixed(0)}s` : "—"}
+                                  {s.fence != null
+                                    ? `${s.fence.toFixed(0)}s`
+                                    : "—"}
                                 </span>
                               </div>
-                              {(s.max_memory != null || s.max_cores != null || s.max_storage != null) && (
+                              {(s.max_memory != null ||
+                                s.max_cores != null ||
+                                s.max_storage != null) && (
                                 <div className="flex items-center gap-3 pt-0.5">
                                   {s.max_memory != null && (
                                     <span className="text-[10px] text-muted-foreground font-mono">
-                                      {s.max_memory >= 1024 ? `${(s.max_memory / 1024).toFixed(0)}GB` : `${s.max_memory}MB`} RAM
+                                      {s.max_memory >= 1024
+                                        ? `${(s.max_memory / 1024).toFixed(0)}GB`
+                                        : `${s.max_memory}MB`}{" "}
+                                      RAM
                                     </span>
                                   )}
                                   {s.max_cores != null && (
@@ -455,35 +489,45 @@ export default function ZonePage() {
 
                 {(zoneDetail.overall.fleet_deviation_penalty ?? 0) > 0 &&
                   zoneDetail.overall.fleet_pri_score != null && (
-                  <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 space-y-2">
-                    <p className="text-xs font-medium text-blue-400">
-                      Fleet Deviation Penalty
-                    </p>
-                    <p className="text-sm text-foreground">
-                      Zone PRI is below the fleet baseline — a penalty was applied.
-                    </p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
-                        <p className="text-[10px] text-muted-foreground mb-0.5">Fleet PRI</p>
-                        <p className="font-mono text-sm font-semibold">
-                          {zoneDetail.overall.fleet_pri_score.toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
-                        <p className="text-[10px] text-muted-foreground mb-0.5">Zone PRI</p>
-                        <p className="font-mono text-sm font-semibold">
-                          {zoneDetail.overall.pri_score.toFixed(1)}
-                        </p>
-                      </div>
-                      <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
-                        <p className="text-[10px] text-muted-foreground mb-0.5">Deducted</p>
-                        <p className="font-mono text-sm font-semibold text-red-400">
-                          −{zoneDetail.overall.fleet_deviation_penalty.toFixed(2)}
-                        </p>
+                    <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 space-y-2">
+                      <p className="text-xs font-medium text-blue-400">
+                        Fleet Deviation Penalty
+                      </p>
+                      <p className="text-sm text-foreground">
+                        Zone PRI is below the fleet baseline — a penalty was
+                        applied.
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
+                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                            Fleet PRI
+                          </p>
+                          <p className="font-mono text-sm font-semibold">
+                            {zoneDetail.overall.fleet_pri_score.toFixed(1)}
+                          </p>
+                        </div>
+                        <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
+                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                            Zone PRI
+                          </p>
+                          <p className="font-mono text-sm font-semibold">
+                            {zoneDetail.overall.pri_score.toFixed(1)}
+                          </p>
+                        </div>
+                        <div className="rounded bg-surface-3 border border-border/40 px-2.5 py-2 text-center">
+                          <p className="text-[10px] text-muted-foreground mb-0.5">
+                            Deducted
+                          </p>
+                          <p className="font-mono text-sm font-semibold text-red-400">
+                            −
+                            {zoneDetail.overall.fleet_deviation_penalty.toFixed(
+                              2,
+                            )}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {(zoneDetail.overall.cascaded_failures ?? 0) > 0 && (
                   <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3">
@@ -528,7 +572,11 @@ export default function ZonePage() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-xl">ESX (Hosts) Metrics</CardTitle>
                 <Link href={`/zone/${zoneId}/hosts`}>
-                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-foreground gap-1 shrink-0"
+                  >
                     View Hosts
                     <ArrowRight className="w-3 h-3" />
                   </Button>

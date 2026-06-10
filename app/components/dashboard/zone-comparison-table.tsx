@@ -34,8 +34,10 @@ const COLUMNS: { key: SortKey | "zone"; label: string; right?: boolean }[] = [
 ];
 
 const PRI_COLOR: Record<ZoneColor, string> = {
-  green: "text-green-700 dark:text-green-400 bg-green-500/10 border-green-500/20",
-  amber: "text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+  green:
+    "text-green-700 dark:text-green-400 bg-green-500/10 border-green-500/20",
+  amber:
+    "text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
   red: "text-red-700 dark:text-red-400 bg-red-500/10 border-red-500/20",
 };
 
@@ -46,7 +48,7 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
   function handleSort(key: SortKey | "zone") {
     if (key === "zone") return;
     if (key === sortKey) {
-      setSortDir(d => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("desc");
@@ -64,7 +66,7 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
       <table className="w-full text-sm border-collapse">
         <thead>
           <tr className="border-b border-border/40 bg-muted/30">
-            {COLUMNS.map(col => {
+            {COLUMNS.map((col) => {
               const active = col.key !== "zone" && col.key === sortKey;
               return (
                 <th
@@ -78,11 +80,12 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
                 >
                   <span className="inline-flex items-center gap-1">
                     {col.label}
-                    {active && (
-                      sortDir === "desc"
-                        ? <ChevronDown className="w-3 h-3" />
-                        : <ChevronUp className="w-3 h-3" />
-                    )}
+                    {active &&
+                      (sortDir === "desc" ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronUp className="w-3 h-3" />
+                      ))}
                   </span>
                 </th>
               );
@@ -106,13 +109,15 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
                     zoneId={zone.zone_id}
                     width={20}
                     height={20}
-                    className="rounded object-contain shrink-0"
+                    className="object-contain shrink-0"
                   />
                   {formatZoneLabel(zone.zone_id)}
                 </Link>
               </td>
               <td className="px-4 py-3 text-right">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${PRI_COLOR[zone.color]}`}>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold border ${PRI_COLOR[zone.color]}`}
+                >
                   {zone.pri_score.toFixed(1)}
                 </span>
               </td>
@@ -128,10 +133,14 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
               <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
                 {zone.vms_count}
               </td>
-              <td className={`px-4 py-3 text-right font-mono text-xs font-semibold ${zone.failed_count > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+              <td
+                className={`px-4 py-3 text-right font-mono text-xs font-semibold ${zone.failed_count > 0 ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}
+              >
                 {zone.failed_count}
               </td>
-              <td className={`px-4 py-3 text-right font-mono text-xs ${zone.error_rate > 10 ? "text-red-500 dark:text-red-400" : zone.error_rate > 5 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+              <td
+                className={`px-4 py-3 text-right font-mono text-xs ${zone.error_rate > 10 ? "text-red-500 dark:text-red-400" : zone.error_rate > 5 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
+              >
                 {zone.error_rate.toFixed(1)}%
               </td>
             </tr>

@@ -1,11 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { chartTooltipStyle, chartLabelStyle, chartItemStyle } from "@/app/lib/chart-tooltip";
+import {
+  chartTooltipStyle,
+  chartLabelStyle,
+  chartItemStyle,
+} from "@/app/lib/chart-tooltip";
 import { ZoneOverviewCard } from "@/app/components/dashboard/zone-overview";
 import { ErrorDistributionChart } from "@/app/components/dashboard/error-distribution";
 import { ErrorTimeline } from "@/app/components/dashboard/error-timeline";
-import { ZoneComparisonTable, type ZoneComparisonRow } from "@/app/components/dashboard/zone-comparison-table";
+import {
+  ZoneComparisonTable,
+  type ZoneComparisonRow,
+} from "@/app/components/dashboard/zone-comparison-table";
 import { ErrorHeatmap } from "@/app/components/dashboard/error-heatmap";
 import {
   ERROR_CLASSIFICATIONS,
@@ -394,7 +401,7 @@ export default function Dashboard() {
                         zoneId={aggregate.overview.highest_risk_zone}
                         width={24}
                         height={24}
-                        className="rounded object-contain shrink-0"
+                        className="object-contain shrink-0"
                       />
                     )}
                     <p className="font-sans text-2xl font-semibold">
@@ -438,12 +445,15 @@ export default function Dashboard() {
               />
             </div>
 
-            {aggregate.zones_comparison && aggregate.zones_comparison.length > 0 && (
-              <div className="mb-8">
-                <p className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">Zone Comparison</p>
-                <ZoneComparisonTable zones={aggregate.zones_comparison} />
-              </div>
-            )}
+            {aggregate.zones_comparison &&
+              aggregate.zones_comparison.length > 0 && (
+                <div className="mb-8">
+                  <p className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wide">
+                    Zone Comparison
+                  </p>
+                  <ZoneComparisonTable zones={aggregate.zones_comparison} />
+                </div>
+              )}
           </>
         )}
 

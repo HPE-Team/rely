@@ -8,25 +8,25 @@ const sections = [
   { label: 'Problem',      pages: [2, 3] },
   { label: 'Error Classes', pages: [4] },
   { label: 'Data Gen',     pages: [5, 6, 7, 8] },
-  { label: 'Research',     pages: [9] },
-  { label: 'Formula',      pages: [10, 11, 12, 13, 14, 15, 16] },
-  { label: 'Color System', pages: [17] },
-  { label: 'Tech Stack',   pages: [18] },
-  { label: 'Demo',         pages: [19] },
+  { label: 'Research',     pages: [9, 10, 11] },
+  { label: 'Formula',      pages: [12, 13, 14, 15, 16, 17, 18] },
+  { label: 'Color System', pages: [19] },
+  { label: 'Tech Stack',   pages: [20] },
+  { label: 'Demo',         pages: [21] },
 ]
 
-const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 20)
+const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 22)
 
 const activeIndex = computed(() =>
   sections.findIndex(s => s.pages.includes(currentSlideNo.value))
 )
 
-// within Formula section, show which term (slide 10 = overview, 11-16 = terms 1-6)
-const formulaProgress = computed(() => {
-  const p = currentSlideNo.value
-  if (p === 10) return '0 / 6'
-  if (p >= 11 && p <= 16) return `${p - 10} / 6`
-  return null
+// position within the active section, shown only for multi-slide sections
+const sectionProgress = computed(() => {
+  const s = sections[activeIndex.value]
+  if (!s || s.pages.length < 2) return null
+  const pos = s.pages.indexOf(currentSlideNo.value) + 1
+  return `${pos} / ${s.pages.length}`
 })
 </script>
 
@@ -36,8 +36,8 @@ const formulaProgress = computed(() => {
       <div :class="['toc-item', { active: i === activeIndex, past: i < activeIndex }]">
         <span class="toc-dot" />
         <span class="toc-label">{{ section.label }}</span>
-        <span v-if="i === activeIndex && formulaProgress && section.label === 'Formula'" class="toc-sub">
-          {{ formulaProgress }}
+        <span v-if="i === activeIndex && sectionProgress" class="toc-sub">
+          {{ sectionProgress }}
         </span>
       </div>
       <div v-if="i < sections.length - 1" class="toc-sep" />

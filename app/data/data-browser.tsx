@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { MarkdownContent } from "@/app/docs/how-we-calculate/markdown-content";
+import { ExportPdfButton } from "@/app/docs/how-we-calculate/export-pdf-button";
 import { sileo } from "sileo";
 import { toastFill } from "@/app/lib/toast-style";
 import { NODE_TYPES, STATUSES, ERROR_TYPES, POWER_STATES } from "@/app/lib/db/schema";
@@ -398,8 +399,17 @@ export function DataBrowser({ schemaSource }: { schemaSource: string }) {
 
       {/* Schema tab */}
       {tab === "schema" && (
-        <article className="rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
+        <article className="relative group min-w-0 rounded-xl border border-border/50 bg-surface-2/60 shadow-sm px-6 sm:px-10 py-8 sm:py-10">
           <MarkdownContent source={schemaSource} highlighted={{}} />
+          
+          <div className="print:hidden pointer-events-none absolute top-4 right-4 z-10">
+            <div className="pointer-events-auto">
+              <ExportPdfButton
+                markdown={schemaSource}
+                filename="schema"
+              />
+            </div>
+          </div>
         </article>
       )}
 

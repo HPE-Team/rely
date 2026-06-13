@@ -261,6 +261,30 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
                     </p>
                   </div>
                 </div>
+                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
+                  <div className="flex items-start justify-between gap-4 lg:justify-start">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm">CR threshold</p>
+                      <p className="text-xs text-muted-foreground">
+                        Free zone — no penalty for utilization ≤ this. Above it, penalty grows quadratically: score = 1/(1 + max(0, u − t)²).
+                      </p>
+                    </div>
+                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
+                      {config.crThreshold.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Slider
+                      value={[config.crThreshold]}
+                      onValueChange={v => setConfig(c => ({ ...c, crThreshold: v[0] }))}
+                      min={0} max={1} step={0.05}
+                      className="flex-1"
+                    />
+                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
+                      {config.crThreshold.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

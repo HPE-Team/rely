@@ -1,0 +1,21 @@
+# Caddy reverse proxy for the Slidev sync server.
+# Plain HTTP on :80 — Let's Encrypt refuses certs for *.amazonaws.com ("forbidden by policy"),
+# so TLS needs a real custom domain. The http:// prefix disables auto-TLS and listens on 80.
+# Caddy auto-upgrades websockets (the nav-sync channel) — no extra ws config needed.
+# To enable HTTPS later: point a real domain at this IP and replace the site line with that
+# bare domain (no http://) — Caddy then auto-provisions a cert.
+
+http://ec2-13-207-45-93.ap-south-1.compute.amazonaws.com {
+	reverse_proxy localhost:3030
+}
+
+# Optional defense-in-depth: gate presenter/entry behind basic auth so a leaked
+# password link alone can't drive the deck. Generate hash with `caddy hash-password`.
+#
+# ec2-13-207-45-93.ap-south-1.compute.amazonaws.com {
+# 	@control path /presenter* /entry*
+# 	basic_auth @control {
+# 		presenter <bcrypt-hash>
+# 	}
+# 	reverse_proxy localhost:3030
+# }

@@ -1,0 +1,18 @@
+# systemd unit for the persistent multi-presenter Slidev sync server.
+# Install: copy to /etc/systemd/system/slidev.service, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now slidev
+# Edit WorkingDirectory + SLIDEV_PASS before enabling.
+
+[Unit]
+Description=Rely Slidev live sync server
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/rely/slides
+Environment=SLIDEV_PASS=change-me-strong-pass
+ExecStart=/usr/bin/npx slidev slides.md --remote ${SLIDEV_PASS} --bind 0.0.0.0 --port 3030
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

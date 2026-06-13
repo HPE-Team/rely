@@ -20,6 +20,9 @@ export interface PRIConfig {
   /** Weight applied to Capacity Reliability loss: crLoss = (1 − CR) × crWeight × 100.
    *  CR = weighted resource saturation across hosts via 1/(1+u²) decay. Range [0, 0.25]. */
   crWeight: number;
+  /** Utilization free-zone for Capacity Reliability. No penalty for u ≤ crThreshold;
+   *  beyond it, score = 1/(1 + max(0, u − crThreshold)²). Range [0, 1]. */
+  crThreshold: number;
   colorThresholds: ColorThresholds;
 }
 
@@ -28,6 +31,7 @@ export const DEFAULT_PRI_CONFIG: PRIConfig = {
   outlierResourceImpact: { memory: 0.3, cores: 0.3, storage: 0.2 },
   fleetDeviationImpact: 0.05,
   crWeight: 0.15,
+  crThreshold: 0.8,
   colorThresholds: {
     pri: { green: 85, amber: 70 },
     criticalRatio: { amber: 0.3, red: 0.6 },
@@ -180,6 +184,7 @@ export interface HostCapacityData {
  */
 export function calculateCapacityReliability(
   servers: ComputeServerData[],
+  threshold: number = DEFAULT_PRI_CONFIG.crThreshold,
 ): { cr: number; perHostData: HostCapacityData[] } {
   const hosts = servers.filter(s => s.node_type === 'HOST');
   const vms = servers.filter(s => s.node_type === 'VM');
@@ -195,7 +200,10 @@ export function calculateCapacityReliability(
     }
   });
 
-  const score = (u: number) => 1 / (1 + u * u);
+  const score = (u: number) => {
+    const excess = Math.max(0, u - threshold);
+    return 1 / (1 + excess * excess);
+  };
 
   const perHostData: HostCapacityData[] = hosts.map(host => {
     const childVMs = vmsByHost.get(host.id) ?? [];
@@ -523,7 +531,7 @@ export function aggregatePRIMetrics(
   const outlier = calculateOutlierResult(effectiveServers, cfg.outlierResourceImpact);
 
   // Capacity Reliability: host utilization pressure via 1/(1+u²) decay
-  const { cr: crScore } = calculateCapacityReliability(servers);
+  const { cr: crScore } = calculateCapacityReliability(servers, cfg.crThreshold);
   const crLoss = (1 - crScore) * cfg.crWeight * 100;
 
   // Fleet-deviation penalty: only applied when zone PRI is below fleet baseline

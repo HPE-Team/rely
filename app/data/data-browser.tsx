@@ -82,7 +82,7 @@ const COLUMNS: {
     { key: "status_date", label: "Date", width: "w-48", editable: true },
   ];
 
-const ZONES = ["zone-a", "zone-b", "zone-c", "zone-d", "zone-e"];
+const ZONES = ["zone-a", "zone-b", "zone-c", "zone-d", "zone-e", "zone-f"];
 const PAGE_SIZES = [25, 50, 100];
 
 /* ---------- helpers ---------- */

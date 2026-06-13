@@ -16,6 +16,7 @@ const ZONE_CONFIG: Record<string, { name: string; logo: string; logoLight?: stri
   "zone-c": { name: "GCP",          logo: "/zones/gcp.png"          },
   "zone-d": { name: "DigitalOcean", logo: "/zones/digitalocean.png" },
   "zone-e": { name: "Cloudflare",   logo: "/zones/cloudflare.png"   },
+  "zone-f": { name: "Oracle",       logo: "/zones/oracle.png"       },
 };
 
 export function formatZoneLabel(zoneId: string): string {

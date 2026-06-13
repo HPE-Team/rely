@@ -23,6 +23,7 @@ const ZONE_ALIASES: Record<string, string> = {
   gcp: 'zone-c', 'zone-c': 'zone-c',
   digitalocean: 'zone-d', do: 'zone-d', 'zone-d': 'zone-d',
   cloudflare: 'zone-e', cf: 'zone-e', 'zone-e': 'zone-e',
+  oracle: 'zone-f', 'zone-f': 'zone-f',
 };
 
 const ERROR_ALIASES: Record<string, string> = {

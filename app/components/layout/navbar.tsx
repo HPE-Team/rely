@@ -154,18 +154,9 @@ function DocsDropdown() {
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
-  const [isDark, setIsDark] = useState(true);
   const pathname = usePathname();
   const isWide = pathname.startsWith("/data");
   const maxWidth = isWide ? "90rem" : "80rem";
-
-  useEffect(() => {
-    const update = () => setIsDark(document.documentElement.classList.contains("dark"));
-    update();
-    const observer = new MutationObserver(update);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div className="bg-background sticky top-0 z-40 w-full">
@@ -178,7 +169,7 @@ export function Navbar() {
             className="text-sm font-medium text-foreground flex flex-row justify-center items-center gap-2"
             href="/"
           >
-            <Image src={isDark ? "/logo.svg" : "/logo-light.svg"} alt="Logo" width={32} height={32} />
+            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
             <h1 className="text-2xl font-bold tracking-tight">
               Rel<span className="text-brand">y</span>
             </h1>

@@ -363,7 +363,7 @@ export default function Dashboard() {
               <Skeleton className="h-4 w-36 mb-4" />
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
                 <div className="xl:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[...Array(8)].map((_, i) => (
+                  {[...Array(6)].map((_, i) => (
                     <Skeleton key={`zone-card-${i}`} className="h-64" />
                   ))}
                 </div>

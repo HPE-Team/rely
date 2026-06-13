@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Tabs } from "radix-ui";
 import {
   ErrorType,
   type ErrorPhase,
@@ -11,7 +12,7 @@ import { type PRIConfig, DEFAULT_PRI_CONFIG } from "@/app/lib/calculations/pri";
 import { readLocalConfig, saveLocalConfig, clearLocalConfig } from "@/app/lib/config/pri-config";
 import { Slider } from "@/app/components/ui/slider";
 import { Button } from "@/app/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { sileo } from "sileo";
 import { toastFill } from "@/app/lib/toast-style";
 
@@ -38,9 +39,87 @@ function deepMerge(defaults: PRIConfig, partial: Partial<PRIConfig>): PRIConfig 
   };
 }
 
+// ─── value formatters ──────────────────────────────────────────────────────
+const fmtFixed2  = (v: number) => v.toFixed(2);
+const fmtMult    = (v: number) => `${v.toFixed(2)}x`;
+const fmtInt     = (v: number) => String(v);
+const fmtPercent = (v: number) => `${(v * 100).toFixed(0)}%`;
+
+// ─── tab descriptors ───────────────────────────────────────────────────────
+const TABS: ReadonlyArray<{ id: Section; label: string }> = [
+  { id: "pre-provision",        label: "Pre-Provision" },
+  { id: "post-provision",       label: "Post-Provision" },
+  { id: "outliers",             label: "Outliers" },
+  { id: "capacity-reliability", label: "Capacity Reliability" },
+  { id: "fleet-deviation",      label: "Fleet Deviation" },
+  { id: "color",                label: "Color Thresholds" },
+];
+
+// ─── SliderRow ─────────────────────────────────────────────────────────────
+interface SliderRowProps {
+  label: React.ReactNode;
+  description?: string;
+  badge?: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  format: (v: number) => string;
+}
+
+function SliderRow({ label, description, badge, value, onChange, min, max, step, format }: SliderRowProps) {
+  return (
+    <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1.5 py-4">
+      <div className="min-w-0 flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium">{label}</span>
+        {badge && (
+          <span className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground/70">
+            {badge}
+          </span>
+        )}
+      </div>
+      <span className="font-mono font-semibold text-[13px] tabular-nums text-foreground/90 text-right leading-none whitespace-nowrap">
+        {format(value)}
+      </span>
+      {description && (
+        <p className="col-span-2 text-[11px] leading-snug text-muted-foreground/70 line-clamp-1">
+          {description}
+        </p>
+      )}
+      <div className="col-span-2 mt-1.5">
+        <Slider
+          value={[value]}
+          onValueChange={v => onChange(v[0])}
+          min={min} max={max} step={step}
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── SubGroup (labelled hairline rule) ─────────────────────────────────────
+function SubGroup({ label, description }: { label: string; description?: string }) {
+  return (
+    <div className="pt-4 pb-0.5 first:pt-0">
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.15em] font-bold text-muted-foreground whitespace-nowrap">
+          {label}
+        </span>
+        <span className="h-px flex-1 bg-border/60" />
+      </div>
+      {description && (
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      )}
+    </div>
+  );
+}
+
+// ─── main component ────────────────────────────────────────────────────────
 export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
   const [config, setConfig] = useState<PRIConfig>(DEFAULT_PRI_CONFIG);
-  const [openSection, setOpenSection] = useState<Section | null>("pre-provision");
+  const [tab, setTab] = useState<Section>("pre-provision");
 
   useEffect(() => {
     const saved = readLocalConfig();
@@ -84,425 +163,233 @@ export function WeightConfig({ onClose, onWeightsUpdate }: WeightConfigProps) {
       categorizedErrors[cfg.phase].push([errorType, cfg]);
     });
 
-  const toggle = (s: Section) => setOpenSection(cur => cur === s ? null : s);
+  const renderTabBody = (id: Section) => {
+    switch (id) {
+      case "pre-provision":
+      case "post-provision":
+        return categorizedErrors[id].map(([errorType, cfg]) => (
+          <SliderRow
+            key={errorType}
+            label={getErrorTypeLabel(errorType)}
+            description={cfg.description}
+            badge={cfg.severity}
+            value={config.errorWeights[errorType]}
+            onChange={v => setErrorWeight(errorType, v)}
+            min={0} max={2} step={0.1}
+            format={fmtMult}
+          />
+        ));
 
-  const sectionClass = (s: Section) =>
-    `rounded-lg border border-border/60 bg-muted/20 shadow-sm`;
+      case "outliers":
+        return (
+          <>
+            <p className="text-xs text-muted-foreground pt-1 pb-3">
+              Each slider shifts the per-VM Tukey fence multiplier k from the 1.5 base.
+              Higher impact → more slack for resource-heavy VMs.
+            </p>
+            {(
+              [
+                { key: "memory",  label: "Memory impact",    description: "k shifts based on VM max_memory vs fleet median memory" },
+                { key: "cores",   label: "CPU cores impact", description: "k shifts based on VM max_cores vs fleet median cores" },
+                { key: "storage", label: "Storage impact",   description: "k shifts based on VM max_storage vs fleet median storage" },
+              ] as const
+            ).map(({ key, label, description }) => (
+              <SliderRow
+                key={key}
+                label={label}
+                description={description}
+                value={config.outlierResourceImpact[key]}
+                onChange={v => setConfig(c => ({
+                  ...c,
+                  outlierResourceImpact: { ...c.outlierResourceImpact, [key]: v },
+                }))}
+                min={0} max={1} step={0.05}
+                format={fmtFixed2}
+              />
+            ))}
+          </>
+        );
 
-  const headerClass = "flex w-full items-center justify-between rounded-t-lg px-4 py-3 text-left hover:bg-muted/50 transition-colors";
+      case "capacity-reliability":
+        return (
+          <>
+            <SliderRow
+              label="CR weight"
+              description="Loss = (1 − CR) × weight × 100. Uses 1/(1+u²) decay per resource. Set to 0 to disable."
+              value={config.crWeight}
+              onChange={v => setConfig(c => ({ ...c, crWeight: v }))}
+              min={0} max={0.25} step={0.01}
+              format={fmtFixed2}
+            />
+            <SliderRow
+              label="CR threshold"
+              description="Free zone — no penalty at or below this utilization. Above it: 1/(1 + max(0, u − t)²)."
+              value={config.crThreshold}
+              onChange={v => setConfig(c => ({ ...c, crThreshold: v }))}
+              min={0} max={1} step={0.05}
+              format={fmtFixed2}
+            />
+          </>
+        );
 
-  const chevron = (s: Section) => (
-    <ChevronDown
-      className={`h-4 w-4 text-muted-foreground transition-transform ${openSection === s ? "rotate-180" : ""}`}
-    />
-  );
+      case "fleet-deviation":
+        return (
+          <SliderRow
+            label="Deviation impact"
+            description="Penalty = max(0, fleetPRI − zonePRI) × impact. Only zones below fleet baseline are penalized."
+            value={config.fleetDeviationImpact}
+            onChange={v => setConfig(c => ({ ...c, fleetDeviationImpact: v }))}
+            min={0} max={0.2} step={0.01}
+            format={fmtFixed2}
+          />
+        );
 
-  const collapse = (s: Section) => (
-    `grid transition-[grid-template-rows,opacity] duration-300 ease-in-out ${
-      openSection === s ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
-    }`
-  );
+      case "color":
+        return (
+          <>
+            <SubGroup label="PRI Score" />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-green-500 inline-block mr-1.5" />Green threshold</>}
+              description="PRI ≥ this → green (if severity also low)"
+              value={config.colorThresholds.pri.green}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, green: v } },
+              }))}
+              min={50} max={100} step={1}
+              format={fmtInt}
+            />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-red-500 inline-block mr-1.5" />Red threshold</>}
+              description="PRI < this → red regardless of severity"
+              value={config.colorThresholds.pri.amber}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, amber: v } },
+              }))}
+              min={0} max={90} step={1}
+              format={fmtInt}
+            />
+            <SubGroup label="Critical Error Ratio" description="Share of errors that are critical severity (hardware/power/host)" />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-yellow-500 inline-block mr-1.5" />Amber at</>}
+              value={config.colorThresholds.criticalRatio.amber}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, amber: v } },
+              }))}
+              min={0} max={1} step={0.05}
+              format={fmtPercent}
+            />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-red-500 inline-block mr-1.5" />Red at</>}
+              value={config.colorThresholds.criticalRatio.red}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, red: v } },
+              }))}
+              min={0} max={1} step={0.05}
+              format={fmtPercent}
+            />
+            <SubGroup label="ESX Failure Share" description="Share of root-cause failures on ESX hosts (excludes cascaded VMs)" />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-yellow-500 inline-block mr-1.5" />Amber at</>}
+              value={config.colorThresholds.esxFailShare.amber}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, amber: v } },
+              }))}
+              min={0} max={1} step={0.05}
+              format={fmtPercent}
+            />
+            <SliderRow
+              label={<><span className="h-2 w-2 rounded-full bg-red-500 inline-block mr-1.5" />Red at</>}
+              value={config.colorThresholds.esxFailShare.red}
+              onChange={v => setConfig(c => ({
+                ...c,
+                colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, red: v } },
+              }))}
+              min={0} max={1} step={0.05}
+              format={fmtPercent}
+            />
+          </>
+        );
+    }
+  };
 
   return (
-    <div>
-      <div className="flex flex-col space-y-1.5 text-left mb-6 sm:mb-8 py-2 sm:py-4">
-        <h2 className="text-2xl font-bold leading-none tracking-tight">Configuration</h2>
-        <p className="text-sm text-muted-foreground">
-          Adjust failure weights, performance baselines, and color thresholds for PRI scoring
-        </p>
+    <div className="flex flex-col h-full min-h-0">
+
+      {/* ── Header ───────────────────────────────────────────────────── */}
+      <div className="px-6 pt-5 pb-4 bg-popover border-b border-border/60 flex-shrink-0">
+        <div className="flex items-center gap-1.5 text-brand mb-1.5">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]">
+            PRI Scoring
+          </span>
+        </div>
+        <h2 className="text-xl font-bold leading-none tracking-tight">Configuration</h2>
       </div>
 
-      <div className="space-y-4">
-        {/* Error weight sections */}
-        {(["pre-provision", "post-provision"] as const).map(phase => {
-          const items = categorizedErrors[phase];
-          const title = phase === "pre-provision" ? "Pre-Provision Errors" : "Post-Provision Errors";
-          return (
-            <div key={phase} className={sectionClass(phase)}>
-              <button type="button" className={headerClass} onClick={() => toggle(phase)}>
-                <div>
-                  <p className="font-mono text-sm font-semibold">{title}</p>
-                  <p className="text-xs text-muted-foreground">{items.length} slider{items.length === 1 ? "" : "s"}</p>
-                </div>
-                {chevron(phase)}
-              </button>
-              <div className={collapse(phase)}>
-                <div className="overflow-hidden">
-                  <div className="space-y-5 lg:space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                    {items.map(([errorType, cfg]) => (
-                      <div
-                        key={errorType}
-                        className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center"
-                      >
-                        <div className="flex items-start justify-between gap-4 lg:justify-start">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm truncate">{getErrorTypeLabel(errorType)}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{cfg.description}</p>
-                            <p className="hidden lg:inline-block text-[10px] uppercase tracking-wider font-bold text-muted-foreground mt-1.5 px-1.5 py-0.5 rounded bg-muted/60 border border-border/40">
-                              {cfg.severity}
-                            </p>
-                          </div>
-                          <div className="text-right flex-shrink-0 lg:hidden">
-                            <p className="font-mono font-semibold text-sm">{config.errorWeights[errorType].toFixed(2)}x</p>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold text-[10px]">{cfg.severity}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Slider
-                            value={[config.errorWeights[errorType]]}
-                            onValueChange={v => setErrorWeight(errorType, v[0])}
-                            min={0} max={2} step={0.1}
-                            className="flex-1"
-                          />
-                          <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
-                            {config.errorWeights[errorType].toFixed(2)}x
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      {/* ── Tabs: sidebar rail (lg) + content panel ──────────────────── */}
+      <Tabs.Root
+        value={tab}
+        onValueChange={v => setTab(v as Section)}
+        orientation="vertical"
+        className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[210px_1fr]"
+      >
+        {/* Sidebar / horizontal strip */}
+        <Tabs.List
+          className="flex gap-1 overflow-x-auto flex-shrink-0 bg-surface-1 px-3 py-2.5 border-b border-border/60
+            lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-2.5 lg:py-3
+            lg:border-b-0 lg:border-r lg:border-border/60"
+        >
+          {TABS.map(t => (
+            <Tabs.Trigger
+              key={t.id}
+              value={t.id}
+              className="
+                relative whitespace-nowrap lg:whitespace-normal
+                rounded-md px-3 py-2 text-left font-mono text-[13px]
+                text-muted-foreground transition-all
+                hover:bg-foreground/[0.05] hover:text-foreground/80
+                focus-visible:outline-none
+                lg:w-full lg:rounded-l-none lg:border-l-[3px] lg:border-transparent lg:pl-3
+                data-[state=active]:bg-popover data-[state=active]:text-foreground data-[state=active]:font-semibold
+                data-[state=active]:[box-shadow:inset_0_1px_3px_rgba(0,0,0,0.10),inset_0_0_0_1px_rgba(0,0,0,0.03)]
+                lg:data-[state=active]:border-brand
+              "
+            >
+              {t.label}
+            </Tabs.Trigger>
+          ))}
+        </Tabs.List>
 
-        {/* Outliers */}
-        <div className={sectionClass("outliers")}>
-          <button type="button" className={headerClass} onClick={() => toggle("outliers")}>
-            <div>
-              <p className="font-mono text-sm font-semibold">Outliers</p>
-              <p className="text-xs text-muted-foreground">Resource-based dynamic Tukey fence tolerance (k = 1.5 base ± resource impact)</p>
-            </div>
-            {chevron("outliers")}
-          </button>
-          <div className={collapse("outliers")}>
-            <div className="overflow-hidden">
-              <div className="space-y-5 lg:space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                <p className="text-xs text-muted-foreground">
-                  Each slider controls how much a resource dimension shifts the per-VM fence multiplier k away from the 1.5 base.
-                  Higher impact → VMs requesting more than median get more slack; VMs requesting less get a stricter fence.
-                </p>
-
-                {(
-                  [
-                    { key: "memory", label: "Memory impact", description: "k shifts up/down based on VM max_memory vs fleet median memory" },
-                    { key: "cores",  label: "CPU cores impact", description: "k shifts up/down based on VM max_cores vs fleet median cores" },
-                    { key: "storage", label: "Storage impact", description: "k shifts up/down based on VM max_storage vs fleet median storage" },
-                  ] as const
-                ).map(({ key, label, description }) => (
-                  <div
-                    key={key}
-                    className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center"
-                  >
-                    <div className="flex items-start justify-between gap-4 lg:justify-start">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm">{label}</p>
-                        <p className="text-xs text-muted-foreground">{description}</p>
-                      </div>
-                      <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
-                        {config.outlierResourceImpact[key].toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Slider
-                        value={[config.outlierResourceImpact[key]]}
-                        onValueChange={v => setConfig(c => ({
-                          ...c,
-                          outlierResourceImpact: { ...c.outlierResourceImpact, [key]: v[0] },
-                        }))}
-                        min={0} max={1} step={0.05}
-                        className="flex-1"
-                      />
-                      <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
-                        {config.outlierResourceImpact[key].toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* Content panel */}
+        <div className="min-h-0 flex-1 bg-popover">
+          {TABS.map(t => (
+            <Tabs.Content
+              key={t.id}
+              value={t.id}
+              className="h-[min(50vh,420px)] lg:h-[52vh] overflow-y-auto scrollbar-custom px-6 py-4 outline-none data-[state=inactive]:hidden"
+            >
+              {renderTabBody(t.id)}
+            </Tabs.Content>
+          ))}
         </div>
+      </Tabs.Root>
 
-        {/* Capacity Reliability */}
-        <div className={sectionClass("capacity-reliability")}>
-          <button type="button" className={headerClass} onClick={() => toggle("capacity-reliability")}>
-            <div>
-              <p className="font-mono text-sm font-semibold">Capacity Reliability</p>
-              <p className="text-xs text-muted-foreground">Penalize zones with overcommitted hosts via nonlinear utilization decay</p>
-            </div>
-            {chevron("capacity-reliability")}
-          </button>
-          <div className={collapse("capacity-reliability")}>
-            <div className="overflow-hidden">
-              <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-start justify-between gap-4 lg:justify-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">CR weight</p>
-                      <p className="text-xs text-muted-foreground">
-                        Loss = (1 − CR) × weight × 100. CR uses 1/(1+u²) decay per resource (CPU 40%, Mem 40%, Stor 20%). Set to 0 to disable.
-                      </p>
-                    </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
-                      {config.crWeight.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.crWeight]}
-                      onValueChange={v => setConfig(c => ({ ...c, crWeight: v[0] }))}
-                      min={0} max={0.25} step={0.01}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
-                      {config.crWeight.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-start justify-between gap-4 lg:justify-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">CR threshold</p>
-                      <p className="text-xs text-muted-foreground">
-                        Free zone — no penalty for utilization ≤ this. Above it, penalty grows quadratically: score = 1/(1 + max(0, u − t)²).
-                      </p>
-                    </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
-                      {config.crThreshold.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.crThreshold]}
-                      onValueChange={v => setConfig(c => ({ ...c, crThreshold: v[0] }))}
-                      min={0} max={1} step={0.05}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
-                      {config.crThreshold.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Fleet Deviation */}
-        <div className={sectionClass("fleet-deviation")}>
-          <button type="button" className={headerClass} onClick={() => toggle("fleet-deviation")}>
-            <div>
-              <p className="font-mono text-sm font-semibold">Fleet Deviation</p>
-              <p className="text-xs text-muted-foreground">Penalize zones that fall below the fleet-wide PRI baseline</p>
-            </div>
-            {chevron("fleet-deviation")}
-          </button>
-          <div className={collapse("fleet-deviation")}>
-            <div className="overflow-hidden">
-              <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-start justify-between gap-4 lg:justify-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">Deviation impact</p>
-                      <p className="text-xs text-muted-foreground">
-                        Penalty = max(0, fleetPRI − zonePRI) × impact. Only zones below the fleet baseline are penalized. Set to 0 to disable.
-                      </p>
-                    </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">
-                      {config.fleetDeviationImpact.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.fleetDeviationImpact]}
-                      onValueChange={v => setConfig(c => ({ ...c, fleetDeviationImpact: v[0] }))}
-                      min={0} max={0.2} step={0.01}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">
-                      {config.fleetDeviationImpact.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Color Thresholds */}
-        <div className={sectionClass("color")}>
-          <button type="button" className={headerClass} onClick={() => toggle("color")}>
-            <div>
-              <p className="font-mono text-sm font-semibold">Color Thresholds</p>
-              <p className="text-xs text-muted-foreground">PRI and severity cutoffs for green / amber / red</p>
-            </div>
-            {chevron("color")}
-          </button>
-          <div className={collapse("color")}>
-            <div className="overflow-hidden">
-              <div className="space-y-6 border-t border-border/40 bg-muted/30 px-4 py-4">
-                {/* PRI thresholds */}
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">PRI Score</p>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-start justify-between gap-4 lg:justify-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
-                        Green threshold
-                      </p>
-                      <p className="text-xs text-muted-foreground">PRI ≥ this → green (if severity also low)</p>
-                    </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.colorThresholds.pri.green}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.pri.green]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, green: v[0] } },
-                      }))}
-                      min={50} max={100} step={1}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.colorThresholds.pri.green}</p>
-                  </div>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-start justify-between gap-4 lg:justify-start">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
-                        Red threshold
-                      </p>
-                      <p className="text-xs text-muted-foreground">PRI &lt; this → red regardless of severity</p>
-                    </div>
-                    <p className="font-mono font-semibold text-sm flex-shrink-0 lg:hidden">{config.colorThresholds.pri.amber}</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.pri.amber]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, pri: { ...c.colorThresholds.pri, amber: v[0] } },
-                      }))}
-                      min={0} max={90} step={1}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{config.colorThresholds.pri.amber}</p>
-                  </div>
-                </div>
-
-                {/* Critical ratio */}
-                <div className="space-y-1 pt-2">
-                  <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">Critical Error Ratio</p>
-                  <p className="text-xs text-muted-foreground">Share of errors that are critical severity (hardware/power/host)</p>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-center justify-between gap-4 lg:justify-start">
-                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
-                      <span className="h-2 w-2 rounded-full bg-yellow-500 inline-block" />
-                      Amber at
-                    </p>
-                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.criticalRatio.amber * 100).toFixed(0)}%</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.criticalRatio.amber]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, amber: v[0] } },
-                      }))}
-                      min={0} max={1} step={0.05}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.criticalRatio.amber * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-center justify-between gap-4 lg:justify-start">
-                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
-                      <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
-                      Red at
-                    </p>
-                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.criticalRatio.red * 100).toFixed(0)}%</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.criticalRatio.red]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, criticalRatio: { ...c.colorThresholds.criticalRatio, red: v[0] } },
-                      }))}
-                      min={0} max={1} step={0.05}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.criticalRatio.red * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-
-                {/* ESX fail share */}
-                <div className="space-y-1 pt-2">
-                  <p className="text-xs uppercase tracking-wider font-bold text-muted-foreground">ESX Failure Share</p>
-                  <p className="text-xs text-muted-foreground">Share of root-cause failures on ESX hosts (excludes cascaded VMs)</p>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-center justify-between gap-4 lg:justify-start">
-                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
-                      <span className="h-2 w-2 rounded-full bg-yellow-500 inline-block" />
-                      Amber at
-                    </p>
-                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.esxFailShare.amber * 100).toFixed(0)}%</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.esxFailShare.amber]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, amber: v[0] } },
-                      }))}
-                      min={0} max={1} step={0.05}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.esxFailShare.amber * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-                <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
-                  <div className="flex items-center justify-between gap-4 lg:justify-start">
-                    <p className="font-medium text-sm flex items-center gap-2 flex-1">
-                      <span className="h-2 w-2 rounded-full bg-red-500 inline-block" />
-                      Red at
-                    </p>
-                    <p className="font-mono font-semibold text-sm lg:hidden">{(config.colorThresholds.esxFailShare.red * 100).toFixed(0)}%</p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      value={[config.colorThresholds.esxFailShare.red]}
-                      onValueChange={v => setConfig(c => ({
-                        ...c,
-                        colorThresholds: { ...c.colorThresholds, esxFailShare: { ...c.colorThresholds.esxFailShare, red: v[0] } },
-                      }))}
-                      min={0} max={1} step={0.05}
-                      className="flex-1"
-                    />
-                    <p className="hidden lg:block font-mono font-semibold text-sm w-12 text-right flex-shrink-0">{(config.colorThresholds.esxFailShare.red * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6 sm:pt-8">
-        <Button onClick={handleSave} size="lg" className="w-full sm:flex-1 font-semibold">
-          Save Configuration
-        </Button>
-        <Button onClick={handleReset} size="lg" variant="outline" className="w-full sm:flex-1 font-semibold">
+      {/* ── Footer ───────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 bg-surface-1 border-t border-border/60 px-6 py-4
+        flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+        <span className="hidden sm:block mr-auto text-xs text-muted-foreground">
+          Changes apply on save
+        </span>
+        <Button onClick={handleReset} variant="outline" className="font-semibold">
           Reset to Defaults
+        </Button>
+        <Button onClick={handleSave} className="font-semibold">
+          Save Configuration
         </Button>
       </div>
     </div>

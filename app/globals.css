@@ -198,3 +198,6 @@ body {
     color: var(--shiki-dark) !important;
   }
 }
+
+/* Enter gate: hide instantly for returning visitors before React hydrates */
+html.entered .enter-gate { display: none; }

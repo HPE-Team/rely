@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 import { Toaster } from "sileo";
 import { Navbar } from "@/app/components/layout/navbar";
 import { CommandPalette } from "@/app/components/layout/command-palette";
+import { EnterGate } from "@/app/components/layout/enter-gate";
 
 export const metadata: Metadata = {
   title: "PRI Dashboard",
@@ -43,7 +44,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);}catch(e){document.documentElement.classList.add('dark');}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var d=t?t==='dark':true;document.documentElement.classList.toggle('dark',d);}catch(e){document.documentElement.classList.add('dark');}try{if(localStorage.getItem('rely-entered')==='1'){document.documentElement.classList.add('entered');}}catch(e){}})();`,
           }}
         />
       </head>
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Navbar />
         <CommandPalette />
         <main className="flex-1">{children}</main>
+        <EnterGate />
         <footer className="mt-10">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <hr className="border-t border-border/40" />

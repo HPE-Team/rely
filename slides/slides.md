@@ -782,6 +782,25 @@ layout: default
 layout: default
 ---
 
+<div class="wrap">
+  <div style="display:flex; justify-content:center; margin-top:1rem;">
+    <img
+      src="/images/imgCR.png"
+      alt="Capacity Reliability diagram"
+      style="
+        width:100%;
+        max-width:1000px;
+        border-radius:12px;
+        object-fit:contain;
+      "
+    />
+  </div>
+</div>
+
+---
+layout: default
+---
+
 
 # Term 6: Fleet Deviation
 
@@ -821,6 +840,25 @@ layout: default
       Fleet PRI = 88. Impact = 0.05.<br/>Zones A and B are at or above baseline — untouched.<br/>Zones C and D lag the fleet — small nudge down.
     </div>
     <div class="insight" style="margin-top:auto">Loss is intentionally <strong>small</strong> — nudges ranking without masking absolute score.</div>
+  </div>
+</div>
+
+---
+layout: default
+---
+
+<div class="wrap">
+  <div style="display:flex; justify-content:center; margin-top:1rem;">
+    <img
+      src="/images/imgFD.png"
+      alt="Fleet Deviation diagram"
+      style="
+        width:100%;
+        max-width:1000px;
+        border-radius:12px;
+        object-fit:contain;
+      "
+    />
   </div>
 </div>
 

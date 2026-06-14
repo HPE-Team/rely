@@ -783,13 +783,18 @@ layout: default
 ---
 
 <div class="wrap">
-  <div style="display:flex; justify-content:center; margin-top:1rem;">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+    <h1 style="margin:0;font-size:22px;font-weight:500;color:#fff;font-family:'Space Grotesk',sans-serif">Term 5: Capacity Reliability</h1>
+    <span style="background:rgba(64,96,208,0.12);border:1px solid rgba(64,96,208,0.3);border-radius:4px;padding:2px 9px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#4060D0">Dashboard view</span>
+  </div>
+  <div style="display:flex;justify-content:center;padding-bottom:1.5rem;margin-top:1rem">
     <img
       src="/images/imgCR.png"
       alt="Capacity Reliability diagram"
       style="
         width:100%;
-        max-width:1000px;
+        max-width:820px;
+        max-height:72vh;
         border-radius:12px;
         object-fit:contain;
       "
@@ -848,13 +853,18 @@ layout: default
 ---
 
 <div class="wrap">
-  <div style="display:flex; justify-content:center; margin-top:1rem;">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+    <h1 style="margin:0;font-size:22px;font-weight:500;color:#fff;font-family:'Space Grotesk',sans-serif">Term 6: Fleet Deviation</h1>
+    <span style="background:rgba(64,96,208,0.12);border:1px solid rgba(64,96,208,0.3);border-radius:4px;padding:2px 9px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:#4060D0">Dashboard view</span>
+  </div>
+  <div style="display:flex;justify-content:center;padding-bottom:1.5rem;margin-top:1rem">
     <img
       src="/images/imgFD.png"
       alt="Fleet Deviation diagram"
       style="
         width:100%;
-        max-width:1000px;
+        max-width:820px;
+        max-height:72vh;
         border-radius:12px;
         object-fit:contain;
       "

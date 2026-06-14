@@ -9,13 +9,13 @@ const sections = [
   { label: 'Error Classes', pages: [4] },
   { label: 'Data Gen',     pages: [5, 6, 7, 8] },
   { label: 'Research',     pages: [9, 10, 11] },
-  { label: 'Formula',      pages: [12, 13, 14, 15, 16, 17, 18] },
-  { label: 'Color System', pages: [19] },
-  { label: 'Tech Stack',   pages: [20] },
-  { label: 'Demo',         pages: [21] },
+  { label: 'Formula',      pages: [12, 13, 14, 15, 16, 17, 18, 19, 20] },
+  { label: 'Color System', pages: [21] },
+  { label: 'Tech Stack',   pages: [22] },
+  { label: 'Demo',         pages: [23] },
 ]
 
-const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 22)
+const show = computed(() => currentSlideNo.value > 1 && currentSlideNo.value < 24)
 
 const activeIndex = computed(() =>
   sections.findIndex(s => s.pages.includes(currentSlideNo.value))

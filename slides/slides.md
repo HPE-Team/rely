@@ -538,6 +538,12 @@ layout: default
   </div>
 </div>
 
+<div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-left:3px solid #4060D0;border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;margin-top:12px">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">PRI Philosophy</div>
+  <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">PRI combines Reliability (Success Rate), Predictability (Stability), Operational Impact (Error Severity), Performance Anomalies (Outliers), Capacity Health (CR), and Fleet Comparison (Fleet Deviation) into a single provisioning reliability score.</div>
+  <div style="color:#d4d4d4;font-size:12.5px;line-height:1.55">Scores closer to 100 indicate fleets that provision successfully, consistently, and predictably.</div>
+</div>
+
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:14px">
   <div style="background:#1f1f1f;border:1px solid rgba(255,255,255,0.08);border-top:2px solid #4060D0;border-radius:8px;padding:11px 10px;text-align:center">
     <div style="color:#4060D0;font-size:20px;font-weight:700;font-family:'Geist Mono',monospace;line-height:1">0.80</div>
@@ -591,6 +597,10 @@ layout: default
       <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Cascade Dedup</div>
       <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">When an ESX host fails, all its VMs fail too. Without dedup, 1 host outage = <code>1 + N</code> penalties. Rely blames only the host — VMs are dropped from the calculation and surfaced separately.</div>
     </div>
+    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Why Success Gets the Highest Weight</div>
+      <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">Success rate is the strongest operational signal. Failed provisions directly prevent workload deployment. A small drop in success rate impacts users more than a similar increase in provisioning time. Other PRI terms explain reliability quality, but success rate determines whether provisioning succeeded at all.</div>
+    </div>
     <div class="insight" style="margin-top:auto">Dropped VMs still appear in the UI as <strong>cascaded failures</strong> — visible, not penalized.</div>
   </div>
   <div style="padding-left:28px;display:flex;flex-direction:column;gap:12px">
@@ -615,7 +625,7 @@ layout: default
         <tr><td>60%</td><td>40 × 0.80</td><td style="color:#f87171">−32 pts</td></tr>
       </tbody>
     </table>
-    <div class="insight" style="margin-top:auto">Success rate is <strong>4× the weight</strong> of stability — one failure is always the loudest signal.</div>
+    <div class="insight" style="margin-top:auto">Success rate represents actual service availability. Because failed provisioning directly impacts customers and workloads, this metric receives the largest influence in PRI.</div>
   </div>
 </div>
 
@@ -640,6 +650,23 @@ layout: default
       <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">What CV means</div>
       <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">CV = how spread out provision times are, relative to the average. A fleet finishing in 60–70 s consistently has low CV → high stability. High variance even at 100% success still signals something worth investigating.</div>
     </div>
+    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:7px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Why Stability Matters</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#202020;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;color:#d4d4d4;font-size:11.5px;line-height:1.45">Pool A:<br/>60s, 62s, 58s, 61s</div>
+        <div style="background:#202020;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;color:#d4d4d4;font-size:11.5px;line-height:1.45">Pool B:<br/>15s, 220s, 40s, 180s</div>
+      </div>
+      <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">Both pools may achieve 100% success, but only Pool A is predictable. Stability measures consistency rather than speed.</div>
+      <div style="color:#a8a8a8;font-size:12px;line-height:1.45">
+        Benefits of stable provisioning:
+        <ul style="margin:6px 0 0;padding-left:16px">
+          <li>Better SLA adherence</li>
+          <li>Easier capacity planning</li>
+          <!-- <li>Improved user experience</li>
+          <li>Faster anomaly detection</li> -->
+        </ul>
+      </div>
+    </div>
     <div class="insight" style="margin-top:auto">A 100%-success fleet with tight timing loses <strong>zero</strong> stability points.</div>
   </div>
   <div style="padding-left:28px;display:flex;flex-direction:column;gap:12px">
@@ -652,7 +679,7 @@ layout: default
         <tr><td>All identical time</td><td style="color:#4ade80">100</td><td style="color:#4ade80">Zero</td></tr>
       </tbody>
     </table>
-    <div class="insight" style="margin-top:auto">Stability = <strong>overall spread</strong>. Outliers = <strong>extreme stragglers</strong>. A fleet can score well on one and badly on the other.</div>
+    <div class="insight" style="margin-top:auto">High reliability requires both success and predictability. Stable provisioning helps operators trust system behavior under load.</div>
   </div>
 </div>
 
@@ -673,8 +700,14 @@ layout: default
       <div>errorPenalty = min(100, weightedCount / total × 100)</div>
       <div>loss = errorPenalty × <span style="color:#fff;font-weight:700">0.10</span></div>
     </div>
-    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;color:#a8a8a8;font-size:12.5px;line-height:1.55">
-      Two zones with the same failure count can have different PRI loss if their error types differ. Hardware failures hurt far more than IP conflicts.
+    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Why Error Weighting Exists</div>
+      <div style="color:#d4d4d4;font-size:12.5px;line-height:1.55">Ten provisioning failures do not always have the same operational impact.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#202020;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;color:#d4d4d4;font-size:11.5px;line-height:1.45">10 IP allocation failures</div>
+        <div style="background:#202020;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 10px;color:#d4d4d4;font-size:11.5px;line-height:1.45">10 hardware failures</div>
+      </div>
+      <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">Hardware failures often indicate infrastructure instability and may affect multiple dependent workloads. IP conflicts are usually localized and easier to recover from.</div>
     </div>
     <div class="insight" style="margin-top:auto">Error weights are <strong>tunable live</strong> in Settings — adjust per environment priority.</div>
   </div>
@@ -692,7 +725,17 @@ layout: default
         <tr><td><code>RESOURCE_FAILURE</code></td><td>0.3</td><td style="color:#a8a8a8">low</td></tr>
       </tbody>
     </table>
-    <div class="insight" style="margin-top:auto">Errors with weight ≥ 0.9 can also trigger a <strong>red color override</strong> — even if PRI is moderate.</div>
+    <div style="background:#1e1e1e;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#505050;font-family:'Geist Mono',monospace">Severity Principle</div>
+      <div style="color:#a8a8a8;font-size:12.5px;line-height:1.55">
+        <ul style="margin:0;padding-left:16px">
+          <li>Severity reflects operational impact, not frequency.</li>
+          <li>Rare critical failures should influence PRI more than common recoverable failures.</li>
+          <li>Error weighting helps PRI prioritize infrastructure risk rather than simple failure counts.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:auto">Weighted errors improve root-cause visibility and prevent critical infrastructure failures from being hidden by large volumes of minor issues.</div>
   </div>
 </div>
 

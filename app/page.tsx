@@ -93,6 +93,7 @@ export default function Dashboard() {
   const priConfig = usePRIConfig();
 
   useEffect(() => {
+    let ignore = false; // drop responses from a superseded config
     setIsLoading(true);
     Promise.all([
       fetch(withConfig("/api/zones", priConfig), { cache: "no-store" }).then(
@@ -103,6 +104,7 @@ export default function Dashboard() {
       }).then((r) => r.json()),
     ])
       .then(([zonesResponse, aggregateResponse]) => {
+        if (ignore) return;
         const fetchErrors: string[] = [];
 
         if (!zonesResponse.success) {
@@ -123,9 +125,13 @@ export default function Dashboard() {
         setIsLoading(false);
       })
       .catch((err) => {
+        if (ignore) return;
         setError(err.message);
         setIsLoading(false);
       });
+    return () => {
+      ignore = true;
+    };
   }, [priConfig]);
 
   const preProvisionErrorData = useMemo(

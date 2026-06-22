@@ -3,17 +3,57 @@ import { type PRIConfig, DEFAULT_PRI_CONFIG } from '../calculations/pri';
 const STORAGE_KEY = 'pri_config';
 const LEGACY_KEY = 'pri_error_weights';
 
+/** URL-safe base64 (no +/= chars) so the config rides in the URL as an opaque `eyJ…` blob. */
+function toBase64Url(json: string): string {
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(b64url: string): string {
+  let b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+  b64 += '='.repeat((4 - (b64.length % 4)) % 4);
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
 export function serializePRIConfig(cfg: Partial<PRIConfig>): string {
-  return encodeURIComponent(JSON.stringify(cfg));
+  return toBase64Url(JSON.stringify(cfg));
 }
 
 export function parsePRIConfig(qs: string | null): Partial<PRIConfig> {
   if (!qs) return {};
+  // Current format: base64url-encoded JSON.
   try {
-    return JSON.parse(decodeURIComponent(qs)) as Partial<PRIConfig>;
+    return JSON.parse(fromBase64Url(qs)) as Partial<PRIConfig>;
   } catch {
-    return {};
+    // Legacy format: encodeURIComponent(JSON) — keeps older shared links working.
+    try {
+      return JSON.parse(decodeURIComponent(qs)) as Partial<PRIConfig>;
+    } catch {
+      return {};
+    }
   }
+}
+
+/** Deep-merge a partial config over the defaults, yielding a fully-populated config. */
+export function mergePRIConfig(partial: Partial<PRIConfig>): PRIConfig {
+  const d = DEFAULT_PRI_CONFIG;
+  return {
+    ...d,
+    ...partial,
+    errorWeights: { ...d.errorWeights, ...partial.errorWeights },
+    outlierResourceImpact: { ...d.outlierResourceImpact, ...partial.outlierResourceImpact },
+    colorThresholds: {
+      ...d.colorThresholds,
+      ...partial.colorThresholds,
+      pri: { ...d.colorThresholds.pri, ...partial.colorThresholds?.pri },
+      criticalRatio: { ...d.colorThresholds.criticalRatio, ...partial.colorThresholds?.criticalRatio },
+      esxFailShare: { ...d.colorThresholds.esxFailShare, ...partial.colorThresholds?.esxFailShare },
+    },
+  };
 }
 
 /** Client-only: reads saved config from localStorage, migrating legacy keys. */

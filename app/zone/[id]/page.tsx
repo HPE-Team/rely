@@ -121,9 +121,11 @@ export default function ZonePage() {
   useEffect(() => {
     if (!zoneId) return;
 
+    let ignore = false; // drop responses from a superseded config
     fetch(withConfig(`/api/zones/${zoneId}`, priConfig))
       .then((res) => res.json())
       .then((detailData) => {
+        if (ignore) return;
         if (!detailData.success) {
           setError(detailData.error || "Failed to fetch zone details");
           setIsLoading(false);
@@ -133,9 +135,13 @@ export default function ZonePage() {
         setIsLoading(false);
       })
       .catch((err) => {
+        if (ignore) return;
         setError(err.message);
         setIsLoading(false);
       });
+    return () => {
+      ignore = true;
+    };
   }, [zoneId, priConfig]);
 
   if (isLoading) {

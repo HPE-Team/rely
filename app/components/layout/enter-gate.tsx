@@ -20,6 +20,8 @@ export function EnterGate() {
 
   function handleEnter() {
     localStorage.setItem("rely-entered", "1");
+    // Let deferred overlays (e.g. a shared-config prompt) know the splash is gone.
+    window.dispatchEvent(new Event("rely-entered"));
     setFading(true);
     setTimeout(() => setVisible(false), 500);
   }

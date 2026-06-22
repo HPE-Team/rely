@@ -193,7 +193,7 @@ export function Navbar() {
                 <Settings className="w-5 h-5" />
               </button>
             </DialogTrigger>
-            <DialogContent className="w-[calc(100vw-2rem)] max-w-xl lg:max-w-3xl max-h-[85vh] overflow-hidden outline-none flex flex-col p-0 gap-0">
+            <DialogContent className="w-[calc(100vw-2rem)] max-w-xl lg:max-w-3xl max-h-[85vh] lg:max-h-[90vh] overflow-hidden outline-none flex flex-col p-0 gap-0">
               <DialogTitle className="sr-only">
                 Configure Metric Weights
               </DialogTitle>

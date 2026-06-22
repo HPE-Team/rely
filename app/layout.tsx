@@ -17,6 +17,7 @@ import { Toaster } from "sileo";
 import { Navbar } from "@/app/components/layout/navbar";
 import { CommandPalette } from "@/app/components/layout/command-palette";
 import { EnterGate } from "@/app/components/layout/enter-gate";
+import { SharedConfigGate } from "@/app/components/dashboard/shared-config-modal";
 
 export const metadata: Metadata = {
   title: "PRI Dashboard",
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Toaster position="bottom-right" />
         <Navbar />
         <CommandPalette />
+        <SharedConfigGate />
         <main className="flex-1">{children}</main>
         <EnterGate />
         <footer className="mt-10">

@@ -154,15 +154,32 @@ function DocsDropdown() {
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const isWide = pathname.startsWith("/data");
   const maxWidth = isWide ? "90rem" : "80rem";
 
+  // Border + rounded bottom corners appear once the page is scrolled
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <div className="bg-background sticky top-0 z-40 w-full">
+    <div className="sticky top-0 z-40 w-full">
       <nav
-        className="mx-auto px-4 lg:px-8 py-4 flex items-center justify-between w-full"
-        style={{ maxWidth, transition: "max-width 350ms ease" }}
+        className={`mx-auto px-4 lg:px-8 py-3.5 flex items-center justify-between w-full border ${
+          scrolled
+            ? "border-border rounded-b-xl bg-background/85 backdrop-blur-xl shadow-lg shadow-black/5"
+            : "border-transparent rounded-b-none bg-transparent backdrop-blur-none shadow-none"
+        }`}
+        style={{
+          maxWidth,
+          transition:
+            "max-width 350ms ease, border-color 300ms ease, border-radius 300ms ease, background-color 300ms ease, backdrop-filter 300ms ease, box-shadow 300ms ease",
+        }}
       >
         <div className="flex items-center gap-3">
           <Link
@@ -207,12 +224,6 @@ export function Navbar() {
           </Dialog>
         </div>
       </nav>
-      <div
-        className="mx-auto px-4 lg:px-8 w-full"
-        style={{ maxWidth, transition: "max-width 350ms ease" }}
-      >
-        <hr className="border-t border-border/40" />
-      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { ZoneLogo } from "@/app/components/zone-logo";
 import { formatZoneLabel } from "@/app/lib/utils";
@@ -42,6 +43,7 @@ const PRI_COLOR: Record<ZoneColor, string> = {
 };
 
 export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
+  const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("pri_score");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -96,6 +98,7 @@ export function ZoneComparisonTable({ zones }: { zones: ZoneComparisonRow[] }) {
           {sorted.map((zone, i) => (
             <tr
               key={zone.zone_id}
+              onClick={() => router.push(`/zone/${zone.zone_id}`)}
               className={`border-b border-border/20 last:border-b-0 hover:bg-muted/20 transition-colors cursor-pointer ${
                 i % 2 === 0 ? "" : "bg-muted/5"
               }`}

@@ -15,6 +15,10 @@ import {
 } from "@/app/components/dashboard/zone-comparison-table";
 import { ErrorHeatmap } from "@/app/components/dashboard/error-heatmap";
 import {
+  FleetStatModal,
+  type FleetStatTarget,
+} from "@/app/components/dashboard/fleet-stat-modal";
+import {
   ERROR_CLASSIFICATIONS,
   getErrorTypeLabel,
   PRE_PROVISION_ERRORS,
@@ -90,6 +94,7 @@ export default function Dashboard() {
   const [aggregate, setAggregate] = useState<AggregateData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statTarget, setStatTarget] = useState<FleetStatTarget | null>(null);
   const priConfig = usePRIConfig();
 
   useEffect(() => {
@@ -183,7 +188,10 @@ export default function Dashboard() {
         {/* Fleet Summary */}
         {!isLoading && aggregate && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-            <Card className="border-border/50 shadow-sm">
+            <Card
+              className="cursor-pointer border-border/50 shadow-sm transition-all hover:border-border/80 hover:shadow-md"
+              onClick={() => setStatTarget("fleet")}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Fleet PRI
@@ -199,7 +207,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50 shadow-sm">
+            <Card
+              className="cursor-pointer border-border/50 shadow-sm transition-all hover:border-border/80 hover:shadow-md"
+              onClick={() => setStatTarget("servers")}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Servers
@@ -216,7 +227,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50 shadow-sm">
+            <Card
+              className="cursor-pointer border-border/50 shadow-sm transition-all hover:border-border/80 hover:shadow-md"
+              onClick={() => setStatTarget("errors")}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Total Errors
@@ -233,7 +247,10 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50 shadow-sm">
+            <Card
+              className="cursor-pointer border-border/50 shadow-sm transition-all hover:border-border/80 hover:shadow-md"
+              onClick={() => setStatTarget("coverage")}
+            >
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
                   Fleet Coverage
@@ -252,6 +269,15 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {aggregate && (
+          <FleetStatModal
+            target={statTarget}
+            onOpenChange={(o) => !o && setStatTarget(null)}
+            aggregate={aggregate}
+            zones={zones}
+          />
         )}
 
         {/* Zones Grid */}

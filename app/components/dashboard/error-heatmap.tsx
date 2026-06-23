@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -52,6 +53,7 @@ const ERROR_BG: Record<ErrorType, string> = {
 };
 
 export function ErrorHeatmap() {
+  const router = useRouter();
   const [data, setData] = useState<HeatmapZone[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -122,7 +124,11 @@ export function ErrorHeatmap() {
           </thead>
           <tbody>
             {data.map((zone) => (
-              <tr key={zone.zone_id} className="border-t border-border/20">
+              <tr
+                key={zone.zone_id}
+                onClick={() => router.push(`/zone/${zone.zone_id}`)}
+                className="border-t border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+              >
                 <td className="py-2 pr-4">
                   <Link
                     href={`/zone/${zone.zone_id}`}
@@ -148,7 +154,7 @@ export function ErrorHeatmap() {
                       {count > 0 ? (
                         <span
                           title={`${formatZoneLabel(zone.zone_id)} · ${et} · ${count} occurrence${count !== 1 ? "s" : ""}`}
-                          className={`inline-flex items-center justify-center w-10 h-7 rounded font-mono font-semibold cursor-default text-white ${ERROR_BG[et]}`}
+                          className={`inline-flex items-center justify-center w-10 h-7 rounded font-mono font-semibold text-white ${ERROR_BG[et]}`}
                           style={{ opacity: intensity }}
                         >
                           {count}
